@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitor de Precios - Buscalibre</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-50 font-sans text-gray-800">
+
+    <div class="max-w-6xl mx-auto p-6">
+        <header class="mb-8 flex justify-between items-center border-b border-gray-200 pb-4">
+            <div>
+                <h1 class="text-3xl font-bold tracking-tight text-gray-900">Mis Libros</h1>
+                <p class="text-sm text-gray-500">Monitoreo automático de precios óptimos</p>
+            </div>
+            <span class="bg-emerald-100 text-emerald-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">Sistema Activo</span>
+        </header>
+
+        <div id="grid-libros" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            </div>
+    </div>
+
+    <script>
+        // Simulación de lectura del archivo JSON generado por Python
+        // En una app real, usarías fetch('historial_libros.json')
+        async function cargarDashboard() {
+            try {
+                const response = await fetch('historial_libros.json');
+                const datos = await response.json();
+                const grid = document.getElementById('grid-libros');
+
+                Object.keys(datos).forEach((titulo, index) => {
+                    const info = datos[titulo];
+                    const idGrafico = `chart-${index}`;
+                    
+                    // Extraer fechas y precios para el gráfico
+                    const fechas = info.historial.map(h => h.fecha.split(' ')[0]);
+                    const precios = info.historial.map(h => h.precio);
+
+                    // Crear la estructura de la tarjeta en HTML
+                    const tarjeta = document.createElement('div');
+                    tarjeta.className = "bg-white p-6 rounded-2xl shadow-xs border border-gray-100 flex flex-col justify-between";
+                    tarjeta.innerHTML = `
+                        <div class="mb-4">
+                            <div class="flex justify-between items-start gap-4">
+                                <h2 class="text-lg font-semibold text-gray-900 line-clamp-2">${titulo}</h2>
+                                <span class="px-2 py-1 text-xs font-medium rounded-md ${info.estado === 'Disponible' ? 'bg-blue-50 text-blue-700' : 'bg-red-50 text-red-700'}">${info.estado}</span>
+                            </div>
+                            <div class="mt-4 flex items-baseline gap-2">
+                                <span class="text-2xl font-bold text-gray-900">$${info.precio_actual.toLocaleString('es-CL')}</span>
+                                <span class="text-xs text-gray-400">precio actual</span>
+                            </div>
+                        </div>
+                        <div class="mt-4 h-40 w-full">
+                            <canvas id="${idGrafico}"></canvas>
+                        </div>
+                    `;
+                    grid.appendChild(tarjeta);
+
+                    // Renderizar el gráfico de líneas con Chart.js
+                    const ctx = document.getElementById(idGrafico).getContext('2d');
+                    new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: fechas,
+                            datasets: [{
+                                label: 'Historial ($)',
+                                data: precios,
+                                borderColor: '#4f46e5',
+                                borderWidth: 2,
+                                tension: 0.3,
+                                pointBackgroundColor: '#4f46e5',
+                                fill: false
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { legend: { display: false } },
+                            scales: {
+                                y: { ticks: { font: { size: 10 } } },
+                                x: { ticks: { font: { size: 10 } } }
+                            }
+                        }
+                    });
+                });
+            } catch (error) {
+                console.error("Error al cargar los datos del JSON:", error);
+            }
+        }
+
+        window.onload = cargarDashboard;
+    </script>
+</body>
+</html>
