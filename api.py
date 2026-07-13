@@ -5,14 +5,6 @@ import os
 from dotenv import load_dotenv
 from fastapi.middleware.cors import CORSMiddleware
 
-# ... después de app = FastAPI() ...
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"], # Esto permite que cualquier web consulte tu API
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 # Cargar credenciales
 load_dotenv()
 
