@@ -1,100 +1,150 @@
+import os
+import re
 import requests
 from bs4 import BeautifulSoup
-import re
-import json
-import os
+import psycopg2
 from datetime import datetime
+from dotenv import load_dotenv
 
-DATA_FILE = "historial_libros.json"
+# Cargar las variables de entorno desde el archivo .env
+load_dotenv()
 
-# Leer la URL secreta de Discord desde las variables de entorno
-DISCORD_WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK_URL")
+# --- CONFIGURACIÓN ---
+URL_BUSCALIBRE = "https://www.buscalibre.cl/v2/por-comprar_3413286_l.html"
 
-def enviar_alerta_discord(mensaje):
-    if not DISCORD_WEBHOOK_URL:
-        print("Aviso: No se configuró la URL del Webhook de Discord. Alerta solo en consola.")
-        return
-        
-    payload = {
-        "content": mensaje
-    }
+def obtener_conexion():
+    """Crea la conexión a la base de datos PostgreSQL en Supabase"""
     try:
-        respuesta = requests.post(DISCORD_WEBHOOK_URL, json=payload)
+        conn = psycopg2.connect(
+            host=os.getenv("DB_HOST"),
+            port=os.getenv("DB_PORT"),
+            database=os.getenv("DB_NAME"),
+            user=os.getenv("DB_USER"),
+            password=os.getenv("DB_PASSWORD")
+        )
+        return conn
+    except Exception as e:
+        print(f"Error al conectar a la base de datos: {e}")
+        return None
+
+def ejecutar_etl():
+    print("Iniciando pipeline ETL...")
+    
+    # -----------------------------------------
+    # 1. EXTRACT (Extracción)
+    # -----------------------------------------
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
+    try:
+        respuesta = requests.get(URL_BUSCALIBRE, headers=headers)
         respuesta.raise_for_status()
     except Exception as e:
-        print(f"Error al enviar mensaje a Discord: {e}")
-
-def cargar_historial():
-    if os.path.exists(DATA_FILE):
-        with open(DATA_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
-    return {}
-
-def guardar_historial(historial):
-    with open(DATA_FILE, "w", encoding="utf-8") as f:
-        json.dump(historial, f, ensure_ascii=False, indent=4)
-
-def evaluar_notificacion(titulo, precio_anterior, precio_nuevo):
-    if precio_anterior is None:
-        return f"📌 **{titulo}** ha sido agregado al monitoreo.\nPrecio inicial: ${precio_nuevo:,}"
+        print(f"Error al conectar con Buscalibre: {e}")
+        return
+        
+    soup = BeautifulSoup(respuesta.text, 'html.parser')
     
-    if precio_nuevo < precio_anterior:
-        descuento = precio_anterior - precio_nuevo
-        return f"📉 **¡OFERTA!** El libro **{titulo}** BAJÓ de precio.\nDe ~~${precio_anterior:,}~~ a **${precio_nuevo:,}**\n(Ahorras ${descuento:,})"
-    elif precio_nuevo > precio_anterior:
-        aumento = precio_nuevo - precio_anterior
-        return f"🔺 **Alerta:** El libro **{titulo}** SUBIÓ de precio.\nDe ~~${precio_anterior:,}~~ a **${precio_nuevo:,}** (+${aumento:,})"
+    # IMPORTANTE: Si la web de Buscalibre cambió, estas clases podrían ser distintas.
+    # Si te detecta 0 libros, revisa cómo tenías estas líneas en tu scraper original.
+    libros_html = soup.find_all('div', class_='producto') 
     
-    return None
+   # -----------------------------------------
+    # 2. TRANSFORM (Transformación)
+    # -----------------------------------------
+    libros_procesados = []
+    for libro in libros_html:
+        try:
+            # NUEVO: Buscamos el título en la nueva etiqueta div
+            caja_titulo = libro.find('div', class_='titulo')
+            if not caja_titulo:
+                continue
+            
+            titulo_raw = caja_titulo.text
+            
+            # NUEVO: Buscamos el precio en la nueva clase precioAhora
+            caja_precio = libro.find('div', class_='precioAhora')
+            
+            # Si el libro está Agotado, no tendrá caja de precioAhora, así que lo saltamos
+            if not caja_precio:
+                continue
+                
+            precio_raw = caja_precio.text
+            estado_raw = "Disponible" 
+            
+            # Limpiamos los datos (quitamos espacios extra, saltos de línea y símbolos)
+            titulo = titulo_raw.strip()
+            precio_limpio = int(re.sub(r'[^\d]', '', precio_raw))
+            
+            libros_procesados.append({
+                "titulo": titulo,
+                "precio": precio_limpio,
+                "estado": estado_raw
+            })
+        except AttributeError:
+            # Si un libro tiene una estructura rara, lo saltamos
+            continue
 
-def registrar_precios_lista(url_lista):
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-    }
+    print(f"Se encontraron {len(libros_procesados)} libros procesados correctamente.")
+    # -----------------------------------------
+    # 3. LOAD (Carga en Data Mart Kimball)
+    # -----------------------------------------
+    if not libros_procesados:
+        print("No se extrajeron libros. Es probable que las etiquetas HTML de Buscalibre hayan cambiado.")
+        return
+
+    conn = obtener_conexion()
+    if not conn:
+        return
     
     try:
-        respuesta = requests.get(url_lista, headers=headers)
-        sopa = BeautifulSoup(respuesta.text, 'html.parser')
-        cajas_libros = sopa.find_all('div', class_='contenedorProducto')
+        cursor = conn.cursor()
+        hoy = datetime.now()
         
-        historial_completo = cargar_historial()
-        fecha_actual = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-        for caja in cajas_libros:
-            enlace = caja.find('a')
-            titulo = enlace.get('title') if enlace else "Desconocido"
-            precio_elemento = caja.find(class_='precioAhora')
+        # A. Cargar o recuperar la Dimensión Fecha (YYYYMMDD)
+        id_fecha_hoy = int(hoy.strftime("%Y%m%d"))
+        
+        cursor.execute("SELECT id_fecha FROM dim_fecha WHERE id_fecha = %s", (id_fecha_hoy,))
+        if not cursor.fetchone():
+            # Si la fecha no existe, la insertamos
+            cursor.execute("""
+                INSERT INTO dim_fecha (id_fecha, fecha_exacta, anio, mes, dia)
+                VALUES (%s, %s, %s, %s, %s)
+            """, (id_fecha_hoy, hoy.date(), hoy.year, hoy.month, hoy.day))
+        
+        # B. Iterar sobre cada libro procesado
+        for libro in libros_procesados:
+            # Buscar si el libro ya existe en dim_libro
+            cursor.execute("SELECT id_libro FROM dim_libro WHERE titulo = %s", (libro["titulo"],))
+            resultado_libro = cursor.fetchone()
             
-            if precio_elemento:
-                precio_nuevo = int(re.sub(r'[^\d]', '', precio_elemento.text.strip()))
-                estado = "Disponible"
+            if resultado_libro:
+                id_libro = resultado_libro[0]
             else:
-                precio_nuevo = 0
-                estado = "Agotado"
+                # Si no existe, lo insertamos en dim_libro y obtenemos su nuevo ID
+                cursor.execute("""
+                    INSERT INTO dim_libro (titulo, estado)
+                    VALUES (%s, %s) RETURNING id_libro
+                """, (libro["titulo"], libro["estado"]))
+                id_libro = cursor.fetchone()[0]
+                print(f"Nuevo libro registrado en BD: {libro['titulo']}")
+                
+            # C. Insertar el precio del día en la Tabla de Hechos (fact_precio)
+            cursor.execute("""
+                INSERT INTO fact_precio (id_libro, id_fecha, precio)
+                VALUES (%s, %s, %s)
+            """, (id_libro, id_fecha_hoy, libro["precio"]))
+            
+            print(f"Precio registrado: {libro['titulo']} a ${libro['precio']}")
 
-            if titulo not in historial_completo:
-                historial_completo[titulo] = {"precio_actual": precio_nuevo, "estado": estado, "historial": []}
-                precio_anterior = None
-            else:
-                precio_anterior = historial_completo[titulo]["precio_actual"]
-
-            if estado == "Disponible" and precio_nuevo != precio_anterior:
-                alerta = evaluar_notificacion(titulo, precio_anterior, precio_nuevo)
-                if alerta:
-                    enviar_alerta_discord(alerta)
-
-            historial_completo[titulo]["precio_actual"] = precio_nuevo
-            historial_completo[titulo]["estado"] = estado
-            historial_completo[titulo]["historial"].append({
-                "fecha": fecha_actual,
-                "precio": precio_nuevo
-            })
-
-        guardar_historial(historial_completo)
-        print("Proceso de actualización completado.")
-
+        # Guardar los cambios (Commit) y cerrar la conexión
+        conn.commit()
+        print("ETL finalizado con éxito.")
+        
     except Exception as e:
-        print(f"Error en el proceso: {e}")
+        print(f"Error durante la inserción en la base de datos: {e}")
+        conn.rollback() # Si algo falla, deshace los cambios para no dejar datos a medias
+    finally:
+        cursor.close()
+        conn.close()
 
 if __name__ == "__main__":
-    registrar_precios_lista("https://www.buscalibre.cl/v2/por-comprar_3413286_l.html")
+    ejecutar_etl()

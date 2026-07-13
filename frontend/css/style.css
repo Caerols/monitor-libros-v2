@@ -1,0 +1,120 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background-color: #f0f2f5;
+    color: #333;
+    padding: 2rem;
+}
+
+.dashboard-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+header h1 {
+    font-size: 2.5rem;
+    color: #1a237e;
+}
+
+header p {
+    color: #5c6bc0;
+    font-size: 1.1rem;
+    margin-top: 0.5rem;
+}
+
+/* Filtro */
+.panel-control {
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+.panel-control select {
+    padding: 0.6rem 1rem;
+    font-size: 1rem;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    cursor: pointer;
+    background-color: white;
+}
+
+/* Alertas Predictivas */
+.alerta {
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    text-align: center;
+    font-weight: 500;
+}
+.alerta.info { background-color: #e3f2fd; color: #1565c0; border: 1px solid #90caf9; }
+.alerta.warning { background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+.oculta { display: none; }
+
+/* Grid de KPIs */
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.kpi-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    text-align: center;
+    border-top: 5px solid #ccc;
+    transition: transform 0.2s;
+}
+.kpi-card:hover {
+    transform: translateY(-5px);
+}
+.kpi-card h3 {
+    font-size: 0.95rem;
+    color: #666;
+    margin-bottom: 0.8rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.kpi-card .precio {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #333;
+}
+.kpi-card .minimo {
+    font-size: 0.85rem;
+    color: #888;
+    margin-top: 0.3rem;
+}
+.kpi-card .estado {
+    margin-top: 1rem;
+    font-size: 0.9rem;
+    font-weight: bold;
+    padding: 0.4rem 0;
+    border-radius: 6px;
+}
+
+/* Colores del Semáforo */
+.estado-verde { border-top-color: #4caf50; }
+.estado-verde .estado { background-color: #e8f5e9; color: #2e7d32; }
+.estado-amarillo { border-top-color: #ffc107; }
+.estado-amarillo .estado { background-color: #fff8e1; color: #f57f17; }
+.estado-rojo { border-top-color: #f44336; }
+.estado-rojo .estado { background-color: #ffebee; color: #c62828; }
+
+.chart-box {
+    background-color: #ffffff;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}

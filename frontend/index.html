@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BI - Monitor de Libros</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="dashboard-container">
+        <header>
+            <h1>Decisiones de Compra</h1>
+            <p>Dashboard de Inteligencia de Negocios</p>
+        </header>
+
+        <!-- Controles y Filtros -->
+        <div class="panel-control">
+            <label for="filtroLibro">Analizar libro:</label>
+            <select id="filtroLibro">
+                <option value="Todos">Vista General (Todos los libros)</option>
+            </select>
+        </div>
+
+        <!-- Motor de Predicciones -->
+        <div id="alertaInteligente" class="alerta oculta"></div>
+
+        <!-- Tarjetas de Resumen (Semáforo) -->
+        <div id="contenedorKPIs" class="kpi-grid">
+            <!-- Las tarjetas se generan aquí con JavaScript -->
+        </div>
+
+        <main class="chart-box">
+            <canvas id="graficoPrecios"></canvas>
+        </main>
+    </div>
+
+    <script src="js/main.js"></script>
+</body>
+</html>
