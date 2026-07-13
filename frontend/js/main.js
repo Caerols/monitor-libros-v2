@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const API_URL = 'https://api-libros-7k6t.onrender.com';
+    const API_URL = 'https://api-libros-7k6t.onrender.com/api/historial';
     let chartInstance = null;
     let datosGlobales = {};
     let fechasGlobales = [];
