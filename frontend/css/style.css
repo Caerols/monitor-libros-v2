@@ -145,3 +145,67 @@ header p {
 /* Colores automáticos para la tendencia */
 .tendencia-baja { color: #28a745 !important; } /* Verde si bajó */
 .tendencia-alta { color: #dc3545 !important; } /* Rojo si subió */
+
+/* =========================================
+   DISEÑO DE TARJETAS (KPIs) Y RESPONSIVE
+   ========================================= */
+
+/* Forzamos una grilla moderna en vez del Flexbox básico */
+#kpi-container {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 15px !important;
+}
+
+.kpi-card {
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    text-align: center;
+    border-top: 5px solid #2b3a67;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.kpi-card h3 { 
+    margin: 0 0 8px 0; 
+    font-size: 15px; 
+    color: #444; 
+}
+
+.tendencia-baja { color: #28a745 !important; font-weight: bold; font-size: 26px; margin: 0; }
+.tendencia-alta { color: #dc3545 !important; font-weight: bold; font-size: 26px; margin: 0; }
+.kpi-card p:not(.tendencia-baja):not(.tendencia-alta) { font-weight: bold; font-size: 26px; margin: 0; }
+
+/* =========================================
+   📱 MODO CELULAR (PANTALLAS CHICAS)
+   ========================================= */
+@media (max-width: 600px) {
+    #kpi-container {
+        grid-template-columns: 1fr; /* Una sola columna en celu */
+        gap: 10px !important;
+    }
+
+    .kpi-card {
+        padding: 12px 10px; /* Menos relleno para no gastar pantalla */
+        border-radius: 8px;
+    }
+    
+    .kpi-card h3 {
+        font-size: 13px; /* Letra más chica para los títulos largos */
+        margin-bottom: 5px;
+    }
+
+    .tendencia-baja, 
+    .tendencia-alta,
+    .kpi-card p {
+        font-size: 20px !important; /* Precio principal más compacto */
+    }
+    
+    /* Achicamos la info secundaria (Mejor precio y estado) */
+    .kpi-card div {
+        font-size: 11px !important; 
+    }
+}
