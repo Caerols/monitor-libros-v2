@@ -6,11 +6,42 @@ import psycopg2
 from datetime import datetime
 from dotenv import load_dotenv
 
+load_dotenv()
+WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK")
+
 # Cargar las variables de entorno desde el archivo .env
 load_dotenv()
 
 # --- CONFIGURACIÓN ---
 URL_BUSCALIBRE = "https://www.buscalibre.cl/v2/por-comprar_3413286_l.html"
+
+def enviar_alerta_discord(titulo, precio_actual, precio_minimo):
+    if not WEBHOOK_URL:
+        print("Falta el Webhook de Discord.")
+        return
+
+    # Formatear los números para que se vean como plata chilena (ej: $15.000)
+    precio_clp = f"${precio_actual:,.0f}".replace(",", ".")
+    minimo_clp = f"${precio_minimo:,.0f}".replace(",", ".")
+
+    mensaje = {
+        "content": "🚨 **¡ALERTA DE GANGA! MÍNIMO HISTÓRICO ALCANZADO** 🚨",
+        "embeds": [{
+            "title": titulo,
+            "description": "El bot detectó el precio más bajo registrado hasta ahora. ¡Ideal para reventar la tarjeta!",
+            "color": 3066993, # Verde oscuro
+            "fields": [
+                {"name": "💰 Precio Actual", "value": precio_clp, "inline": True},
+                {"name": "📉 Mejor Precio Anterior", "value": minimo_clp, "inline": True}
+            ]
+        }]
+    }
+
+    respuesta = requests.post(WEBHOOK_URL, json=mensaje)
+    if respuesta.status_code in [200, 204]:
+        print(f"✅ Alerta enviada a Discord por {titulo}")
+    else:
+        print(f"❌ Error al enviar alerta: {respuesta.status_code}")
 
 def obtener_conexion():
     """Crea la conexión a la base de datos PostgreSQL en Supabase"""
@@ -112,8 +143,11 @@ def ejecutar_etl():
         
         # B. Iterar sobre cada libro procesado
         for libro in libros_procesados:
+            titulo = libro["titulo"]
+            precio_actual = libro["precio"]
+
             # Buscar si el libro ya existe en dim_libro
-            cursor.execute("SELECT id_libro FROM dim_libro WHERE titulo = %s", (libro["titulo"],))
+            cursor.execute("SELECT id_libro FROM dim_libro WHERE titulo = %s", (titulo,))
             resultado_libro = cursor.fetchone()
             
             if resultado_libro:
@@ -123,17 +157,34 @@ def ejecutar_etl():
                 cursor.execute("""
                     INSERT INTO dim_libro (titulo, estado)
                     VALUES (%s, %s) RETURNING id_libro
-                """, (libro["titulo"], libro["estado"]))
+                """, (titulo, libro["estado"]))
                 id_libro = cursor.fetchone()[0]
-                print(f"Nuevo libro registrado en BD: {libro['titulo']}")
+                print(f"Nuevo libro registrado en BD: {titulo}")
                 
-            # C. Insertar el precio del día en la Tabla de Hechos (fact_precio)
+            # -------------------------------------------------------------
+            # C. Lógica de Alertas Inteligentes (Discord)
+            # -------------------------------------------------------------
+            
+            # 1. Buscar el precio más bajo histórico en la tabla de hechos
+            cursor.execute("SELECT MIN(precio) FROM fact_precio WHERE id_libro = %s", (id_libro,))
+            resultado_min = cursor.fetchone()
+            
+            # Si el libro ya tenía precios guardados, sacamos el mínimo. Si es nuevo, es None.
+            precio_minimo_historico = resultado_min[0] if resultado_min[0] is not None else precio_actual
+            
+            # 2. Si el precio de hoy es menor o igual al histórico (y el libro no es nuevo), alertamos!
+            if precio_actual <= precio_minimo_historico and resultado_min[0] is not None:
+                enviar_alerta_discord(titulo, precio_actual, precio_minimo_historico)
+
+            # -------------------------------------------------------------
+            # D. Insertar el precio del día en la Tabla de Hechos
+            # -------------------------------------------------------------
             cursor.execute("""
                 INSERT INTO fact_precio (id_libro, id_fecha, precio)
                 VALUES (%s, %s, %s)
-            """, (id_libro, id_fecha_hoy, libro["precio"]))
+            """, (id_libro, id_fecha_hoy, precio_actual))
             
-            print(f"Precio registrado: {libro['titulo']} a ${libro['precio']}")
+            print(f"Precio registrado: {titulo} a ${precio_actual}")
 
         # Guardar los cambios (Commit) y cerrar la conexión
         conn.commit()
