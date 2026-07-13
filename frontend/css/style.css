@@ -209,3 +209,36 @@ header p {
         font-size: 11px !important; 
     }
 }
+
+/* --- AJUSTES MOBILE RESPONSIVE --- */
+
+/* 1. Mejorar el buscador para que se vea como un input amigable */
+.panel-control {
+    width: 100%;
+    margin-bottom: 20px;
+    padding: 10px;
+}
+
+#filtroLibro {
+    width: 100%;
+    padding: 12px;
+    border-radius: 8px;
+    border: 2px solid #2b3a67;
+    font-size: 16px; /* Evita zoom automático en iOS */
+}
+
+/* 2. Arreglar el gráfico: hacerlo más alto y mover la leyenda */
+.chart-box {
+    position: relative;
+    height: 300px; /* Le damos altura fija para que no se achate */
+    width: 100%;
+    margin-top: 20px;
+    padding: 10px;
+    background: #fff;
+    border-radius: 12px;
+}
+
+/* 3. Ajuste para que el gráfico no se deforme */
+canvas {
+    max-height: 100%;
+}

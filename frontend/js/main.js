@@ -165,25 +165,31 @@ document.addEventListener("DOMContentLoaded", () => {
                 labels: fechasGlobales,
                 datasets: datasets
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { position: 'top' },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                let label = context.dataset.label || '';
-                                if (label) label += ': ';
-                                if (context.parsed.y !== null) {
-                                    label += formatearDinero(context.parsed.y);
+options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { 
+                            position: window.innerWidth < 600 ? 'bottom' : 'top',
+                            labels: {
+                                boxWidth: window.innerWidth < 600 ? 10 : 40,
+                                font: { size: window.innerWidth < 600 ? 10 : 12 }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) label += ': ';
+                                    if (context.parsed.y !== null) {
+                                        label += formatearDinero(context.parsed.y);
+                                    }
+                                    return label;
                                 }
-                                return label;
                             }
                         }
                     }
                 }
-            }
         });
     }
 });
