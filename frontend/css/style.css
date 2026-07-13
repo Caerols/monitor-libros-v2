@@ -118,3 +118,30 @@ header p {
     padding: 2rem;
     box-shadow: 0 4px 15px rgba(0,0,0,0.05);
 }
+
+.kpi-card {
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    flex: 1;
+    text-align: center;
+    border-top: 5px solid #2b3a67; /* Un azul oscuro elegante */
+}
+
+.kpi-card h3 { 
+    margin: 0 0 10px 0; 
+    font-size: 15px; 
+    color: #666; 
+}
+
+.kpi-card p { 
+    margin: 0; 
+    font-size: 26px; 
+    font-weight: bold; 
+    color: #222; 
+}
+
+/* Colores automáticos para la tendencia */
+.tendencia-baja { color: #28a745 !important; } /* Verde si bajó */
+.tendencia-alta { color: #dc3545 !important; } /* Rojo si subió */

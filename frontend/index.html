@@ -25,11 +25,30 @@
         <!-- Motor de Predicciones -->
         <div id="alertaInteligente" class="alerta oculta"></div>
 
-        <!-- Tarjetas de Resumen (Semáforo) -->
-        <div id="contenedorKPIs" class="kpi-grid">
-            <!-- Las tarjetas se generan aquí con JavaScript -->
+        <!-- Mensaje de Carga -->
+        <div id="loader">
+            ⏳ Conectando con los servidores en la nube...
         </div>
 
+        <!-- Tarjetas de Resumen (KPIs) -->
+        <div id="kpi-container" style="display: none;">
+            <div class="kpi-card">
+                <h3>Precio Actual</h3>
+                <p id="kpi-current">--</p>
+            </div>
+            
+            <div class="kpi-card">
+                <h3>Mínimo Histórico</h3>
+                <p id="kpi-min">--</p>
+            </div>
+            
+            <div class="kpi-card">
+                <h3>Tendencia</h3>
+                <p id="kpi-trend">--</p>
+            </div>
+        </div>
+
+        <!-- Gráfico -->
         <main class="chart-box">
             <canvas id="graficoPrecios"></canvas>
         </main>
