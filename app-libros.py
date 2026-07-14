@@ -1,6 +1,7 @@
 import os
 import re
 import requests
+import cloudscraper
 from bs4 import BeautifulSoup
 import psycopg2
 from datetime import datetime
@@ -62,12 +63,22 @@ def ejecutar_etl():
     print("Iniciando pipeline ETL...")
     
     # -----------------------------------------
-    # 1. EXTRACT (Extracción)
+    # 1. EXTRACT (Extracción Blindada Anti-Bot)
     # -----------------------------------------
-    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
     try:
-        respuesta = requests.get(URL_BUSCALIBRE, headers=headers)
+        # Creamos un scraper que simula un navegador real para saltar protecciones
+        scraper = cloudscraper.create_scraper(
+            browser={
+                'browser': 'chrome',
+                'platform': 'windows',
+                'desktop': True
+            }
+        )
+        
+        # Usamos el scraper en vez de requests normal
+        respuesta = scraper.get(URL_BUSCALIBRE)
         respuesta.raise_for_status()
+        
     except Exception as e:
         print(f"Error al conectar con Buscalibre: {e}")
         return
@@ -76,7 +87,7 @@ def ejecutar_etl():
     
     # IMPORTANTE: Si la web de Buscalibre cambió, estas clases podrían ser distintas.
     # Si te detecta 0 libros, revisa cómo tenías estas líneas en tu scraper original.
-    libros_html = soup.find_all('div', class_='producto') 
+    libros_html = soup.find_all('div', class_='producto')
     
    # -----------------------------------------
     # 2. TRANSFORM (Transformación)
