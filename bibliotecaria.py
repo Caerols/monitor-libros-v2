@@ -97,8 +97,8 @@ async def on_ready():
 async def ayuda(ctx):
     """Muestra la lista de comandos disponibles actualizados"""
     mensaje = (
-        "📜 **Manual de Usuario de la Biblioteca** 📜\n"
-        "Soy tu asistente de archivo. Aquí tienes las directrices para interactuar conmigo:\n\n"
+        "📜 **Manual de Usuario del Archivo** 📜\n"
+        "Soy la encargada de tu catálogo. Por favor, revisa estas directrices y mantén los formatos correctos para no desordenar la base de datos:\n\n"
         "**📚 Gestión de Lectura:**\n"
         "🔹 `!estante` - Muestra tu ficha con los libros leídos y pendientes.\n"
         "🔹 `!leido [título] | [autor]` - Registra un libro terminado (el autor es opcional).\n"
@@ -106,15 +106,16 @@ async def ayuda(ctx):
         "🔹 `!terminar [título]` - Mueve un título de 'pendientes' a 'leídos'.\n\n"
         "**⚙️ Monitoreo de Mercado (Buscalibre):**\n"
         "🔹 `!lista [link]` - Agrega una nueva lista compartida al escáner central.\n"
-        "🔹 `!agregar [link] | [título]` - Ingresa un enlace individual y su título a la base de datos.\n"
+        "🔹 `!agregar [link] | [título]` - Ingresa un enlace individual y su título.\n"
         "🔹 `!target [precio en números] [título]` - Fija una alerta de presupuesto estricta.\n"
-        "🔹 `!precio [título]` - Activa mi radar de precios en la base de datos central.\n"
-        "🔹 `!resumen` - Muestra el top 3 de mejores ofertas del día.\n\n"
+        "🔹 `!precio [título]` - Activa mi radar de precios en la matriz.\n"
+        "🔹 `!resumen` - Muestra el top 3 de mejores ofertas del día.\n"
+        "🔹 `!ofertas` - Consulta qué ejemplares del archivo han tocado su mínimo histórico.\n\n"
         "**🛠️ Sistema:**\n"
         "🔹 `!escanear` - Fuerza al scraper a realizar un barrido de mercado inmediato.\n"
         "🔹 `!saludar` - Inicia el protocolo de saludo básico.\n"
-        "🔹 `!ping` - Verifica si mis sistemas están en línea.\n\n"
-        "*Intenta no olvidar los formatos correctos... aunque si lo haces, siempre puedes volver a preguntarme. Aquí estaré para apañarte.*"
+        "🔹 `!ping` - Verifica el estado de latencia y si mis sistemas están en línea.\n\n"
+        "*Intenta memorizar los comandos... aunque si los olvidas, supongo que puedes volver a preguntarme. Solo trata de no consultar a deshora, los sistemas también necesitan reposo.*"
     )
     await ctx.send(mensaje)
 
@@ -172,6 +173,57 @@ async def saludar(ctx):
         "...Aunque si tienes alguna duda, supongo que puedo ayudarte. Asegúrate de tener buena luz si vas a leer hasta tarde."
     )
     await ctx.send(mensaje)
+
+@bot.command()
+async def ofertas(ctx):
+    """Solicita a la Bibliotecaria un informe de los precios mínimos actuales"""
+    conn = conectar_db()
+    if not conn:
+        await ctx.send("El acceso a la matriz central ha fallado. Verifica tus parámetros de red. \n...Supongo que intentaré revisar los conectores de los servidores por mi cuenta si el problema persiste.")
+        return
+        
+    try:
+        cursor = conn.cursor()
+        query = """
+            WITH Minimos AS (
+                SELECT id_libro, MIN(precio) as min_historico FROM fact_precio GROUP BY id_libro
+            ),
+            UltimosPrecios AS (
+                SELECT p.id_libro, p.precio as precio_actual 
+                FROM fact_precio p
+                JOIN dim_fecha f ON p.id_fecha = f.id_fecha
+                WHERE f.fecha_exacta = (SELECT MAX(fecha_exacta) FROM dim_fecha)
+            )
+            SELECT l.titulo, u.precio_actual
+            FROM UltimosPrecios u
+            JOIN Minimos m ON u.id_libro = m.id_libro
+            JOIN dim_libro l ON u.id_libro = l.id_libro
+            WHERE u.precio_actual <= m.min_historico;
+        """
+        cursor.execute(query)
+        resultados = cursor.fetchall()
+        
+        if not resultados:
+            await ctx.send("He consultado el archivo. No hay fluctuaciones relevantes hoy; ningún ejemplar está en su mínimo histórico. \nPuedes volver a tus asuntos. ...Y no te frustres, los números del mercado siempre terminan bajando eventualmente.")
+        else:
+            mensaje = (
+                "Revisión completada. Los siguientes ejemplares han tocado su piso histórico.\n"
+                "Toma nota rápido, por favor. Tengo otros catálogos que ordenar:\n\n"
+            )
+            for fila in resultados:
+                # Formato de dinero chileno con puntos
+                precio_formateado = f"${int(fila[1]):,}".replace(",", ".")
+                mensaje += f"📖 **{fila[0]}** — {precio_formateado}\n"
+            
+            mensaje += "\nAhí lo tienes. Si vas a comprar alguno, espero que al menos te hagas el tiempo para leerlo con calma y no lo dejes juntando polvo en la repisa."
+            
+            await ctx.send(mensaje)
+            
+    except Exception as e:
+        await ctx.send(f"Se ha producido un error de lectura en los registros: {str(e)}. \nCálmate, no es grave. Yo me encargaré de aislar el fallo para que los archivos no se corrompan.")
+    finally:
+        cursor.close()
+        conn.close()
 
 @bot.command(aliases=['leído'])
 async def leido(ctx, *, texto: str):

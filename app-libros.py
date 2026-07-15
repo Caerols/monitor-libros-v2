@@ -201,5 +201,10 @@ def ejecutar_etl():
         cursor.close()
         conn.close()
 
+mensaje_final = {
+    "content": "✅ **Matriz actualizada:** El escaneo diario de Buscalibre ha finalizado con éxito. Los datos están seguros en Supabase."
+}
+requests.post(os.getenv("DISCORD_WEBHOOK"), json=mensaje_final)
+
 if __name__ == "__main__":
     ejecutar_etl()
