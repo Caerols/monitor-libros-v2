@@ -307,7 +307,8 @@ async def precio(ctx, *, nombre_libro: str):
     finally:
         cursor.close()
         conn.close()
-
+        
+@bot.command()
 async def ping(ctx):
     # Calcula el tiempo de respuesta del bot en milisegundos
     latencia = round(bot.latency * 1000)
