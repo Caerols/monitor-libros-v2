@@ -5,10 +5,29 @@ from dotenv import load_dotenv
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import asyncio
+from fastapi import FastAPI
+import uvicorn
+import threading
 
 # Cargar el token desde tu archivo .env
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
+
+# --- SISTEMA DE SOPORTE VITAL (KEEP-ALIVE) ---
+app = FastAPI()
+
+@app.get("/")
+def home():
+    return {"status": "La Bibliotecaria está en línea y vigilando los archivos."}
+
+def run_api():
+    # Las plataformas Cloud asignan el puerto dinámicamente
+    port = int(os.getenv("PORT", 8080))
+    uvicorn.run(app, host="0.0.0.0", port=port)
+
+def mantener_vivo():
+    hilo = threading.Thread(target=run_api)
+    hilo.start()
 
 # --- CONEXIÓN A BASE DE DATOS ---
 def conectar_db():
@@ -36,7 +55,7 @@ bot = commands.Bot(command_prefix='!', intents=intents, help_command=None)
 @bot.event
 async def on_ready():
     print(f'❄️ {bot.user.name} ha iniciado el sistema. Archivos en orden.')
-1
+
 @bot.command()
 async def ayuda(ctx):
     """Muestra la lista de comandos disponibles actualizados"""
@@ -454,6 +473,7 @@ async def resumen(ctx):
 # Despertar a la bibliotecaria
 if __name__ == "__main__":
     if TOKEN:
+        mantener_vivo() # Activa el servidor web en segundo plano (FastAPI)
         bot.run(TOKEN)
     else:
         print("❌ Error de sistema: No se detectó el DISCORD_TOKEN.")
