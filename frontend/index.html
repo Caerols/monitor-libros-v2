@@ -3,57 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BI - Monitor de Libros</title>
+    <title>BI - Monitor de Libros | Matriz Central</title>
     <link rel="stylesheet" href="css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div class="dashboard-container">
-        <header>
-            <h1>Decisiones de Compra</h1>
-            <p>Dashboard de Inteligencia de Negocios</p>
+        <header class="dashboard-header">
+            <h1>📊 Decisiones de Compra</h1>
+            <p>Dashboard de Inteligencia de Negocios y Archivo</p>
         </header>
 
         <!-- Controles y Filtros -->
-        <div class="panel-control">
-            <label for="filtroLibro">Analizar libro:</label>
-            <select id="filtroLibro">
+        <section class="panel-control">
+            <label for="filtroLibro">📚 Analizar libro:</label>
+            <select id="filtroLibro" class="select-moderno">
                 <option value="Todos">Vista General (Todos los libros)</option>
             </select>
-        </div>
+        </section>
 
         <!-- Motor de Predicciones -->
-        <div id="alertaInteligente" class="alerta oculta"></div>
+        <section id="alertaInteligente" class="alerta oculta" aria-live="polite"></section>
 
         <!-- Mensaje de Carga -->
-        <div id="loader">
-            ⏳ Conectando con los servidores en la nube...
+        <div id="loader" class="loader-activo">
+            ⏳ Conectando con los servidores centrales en la nube...
         </div>
 
         <!-- Tarjetas de Resumen (KPIs) -->
-        <div id="kpi-container" style="display: none;">
+        <section id="kpi-container" style="display: none;">
             <div class="kpi-card">
-                <h3>Precio Actual</h3>
+                <h3>💰 Precio Actual</h3>
                 <p id="kpi-current">--</p>
             </div>
             
             <div class="kpi-card">
-                <h3>Mínimo Histórico</h3>
+                <h3>📉 Mínimo Histórico</h3>
                 <p id="kpi-min">--</p>
             </div>
             
             <div class="kpi-card">
-                <h3>Tendencia</h3>
+                <h3>📈 Tendencia</h3>
                 <p id="kpi-trend">--</p>
             </div>
-        </div>
+        </section>
 
-        <!-- Gráfico -->
+        <!-- Gráfico Principal -->
         <main class="chart-box">
             <canvas id="graficoPrecios"></canvas>
         </main>
     </div>
 
+    <!-- Lógica de la aplicación -->
     <script src="js/main.js"></script>
 </body>
 </html>

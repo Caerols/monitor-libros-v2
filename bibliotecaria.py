@@ -3,6 +3,7 @@ from discord.ext import commands
 import os
 from dotenv import load_dotenv
 import psycopg2
+from fastapi.middleware.cors import CORSMiddleware
 from psycopg2.extras import RealDictCursor
 import asyncio
 from fastapi import FastAPI
@@ -13,15 +14,51 @@ import threading
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 
-# --- SISTEMA DE SOPORTE VITAL (KEEP-ALIVE) ---
-app = FastAPI()
+# --- SISTEMA DE SOPORTE VITAL Y API CENTRAL ---
+app = FastAPI(title="Matriz Central: Bot & API")
+
+# Configurar CORS para tu frontend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], 
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/")
 def home():
     return {"status": "La Bibliotecaria está en línea y vigilando los archivos."}
 
+# Tu API fusionada aquí mismo
+@app.get("/api/historial")
+def obtener_historial():
+    """Endpoint que devuelve el historial de precios de todos los libros para el frontend"""
+    conn = conectar_db() # Usamos la misma función de conexión que ya usa el bot
+    if not conn:
+        return {"error": "Sistemas de base de datos caídos."}
+        
+    try:
+        cursor = conn.cursor()
+        query = """
+            SELECT l.titulo, f.fecha_exacta, p.precio
+            FROM fact_precio p
+            JOIN dim_libro l ON p.id_libro = l.id_libro
+            JOIN dim_fecha f ON p.id_fecha = f.id_fecha
+            ORDER BY l.titulo, f.fecha_exacta;
+        """
+        cursor.execute(query)
+        resultados = cursor.fetchall()
+        
+        datos = [{"titulo": fila[0], "fecha": str(fila[1]), "precio": fila[2]} for fila in resultados]
+        return {"historial": datos}
+    except Exception as e:
+        return {"error": str(e)}
+    finally:
+        cursor.close()
+        conn.close()
+
 def run_api():
-    # Las plataformas Cloud asignan el puerto dinámicamente
     port = int(os.getenv("PORT", 8080))
     uvicorn.run(app, host="0.0.0.0", port=port)
 
@@ -307,7 +344,7 @@ async def precio(ctx, *, nombre_libro: str):
     finally:
         cursor.close()
         conn.close()
-        
+
 @bot.command()
 async def ping(ctx):
     # Calcula el tiempo de respuesta del bot en milisegundos

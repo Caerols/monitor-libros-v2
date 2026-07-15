@@ -1,5 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const API_URL = 'https://api-libros-7k6t.onrender.com/api/historial';
+    // 🔗 EL CAMBIO VITAL: Ahora apuntamos directamente al cerebro de la Bibliotecaria
+    const API_URL = 'https://bibliotecaria-bot.onrender.com/api/historial';
+    
     let chartInstance = null;
     let datosGlobales = {};
     let fechasGlobales = [];
@@ -9,8 +11,12 @@ document.addEventListener("DOMContentLoaded", () => {
         return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(monto);
     };
 
+    // Iniciar conexión con la matriz
     fetch(API_URL)
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) throw new Error("Fallo en la comunicación con el servidor");
+            return response.json();
+        })
         .then(data => {
             // 1. Apagar el mensaje de carga apenas lleguen los datos
             const loader = document.getElementById('loader');
@@ -19,7 +25,17 @@ document.addEventListener("DOMContentLoaded", () => {
             // Asegurar que leemos bien el JSON (ya sea un array directo o un objeto)
             const historial = Array.isArray(data) ? data : data.historial;
             
-            fechasGlobales = [...new Set(historial.map(item => item.fecha))];
+            if (!historial || historial.length === 0) {
+                const alertaBox = document.getElementById('alertaInteligente');
+                if (alertaBox) {
+                    alertaBox.style.display = 'block';
+                    alertaBox.innerHTML = '⚠️ No hay datos registrados en el archivo todavía. Asegúrate de que el scraper haya finalizado su barrido.';
+                }
+                return;
+            }
+
+            // Extraer y ordenar fechas únicas
+            fechasGlobales = [...new Set(historial.map(item => item.fecha))].sort();
             
             // Agrupar datos por libro
             historial.forEach(item => {
@@ -45,7 +61,10 @@ document.addEventListener("DOMContentLoaded", () => {
         .catch(error => {
             console.error("Error al cargar la API:", error);
             const loader = document.getElementById('loader');
-            if (loader) loader.innerHTML = '❌ Error al conectar con el servidor de Render.';
+            if (loader) {
+                loader.style.color = '#dc3545';
+                loader.innerHTML = '❌ Error de conexión. La Bibliotecaria podría estar reiniciando sus sistemas. Intenta actualizar la página en unos segundos.';
+            }
         });
 
     function poblarFiltro() {
@@ -65,7 +84,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         dibujarTarjetas(librosAMostrar);
         dibujarGrafico(librosAMostrar);
-        generarPrediccion(librosAMostrar);
+        generarPrediccion();
     }
 
     function dibujarTarjetas(libros) {
@@ -112,7 +131,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    function generarPrediccion(libros) {
+    function generarPrediccion() {
         const alertaBox = document.getElementById('alertaInteligente');
         if (!alertaBox) return;
         
@@ -133,7 +152,7 @@ document.addEventListener("DOMContentLoaded", () => {
             alertaBox.style.backgroundColor = '#fff3cd';
             alertaBox.style.color = '#856404';
             alertaBox.style.border = '1px solid #ffeeba';
-            alertaBox.innerHTML = `📊 <strong>Análisis activado:</strong> Hay suficientes datos históricos.`;
+            alertaBox.innerHTML = `📊 <strong>Análisis activado:</strong> Hay suficientes datos históricos para observar tendencias consistentes.`;
         }
     }
 
@@ -165,31 +184,31 @@ document.addEventListener("DOMContentLoaded", () => {
                 labels: fechasGlobales,
                 datasets: datasets
             },
-options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { 
-                            position: window.innerWidth < 600 ? 'bottom' : 'top',
-                            labels: {
-                                boxWidth: window.innerWidth < 600 ? 10 : 40,
-                                font: { size: window.innerWidth < 600 ? 10 : 12 }
-                            }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    let label = context.dataset.label || '';
-                                    if (label) label += ': ';
-                                    if (context.parsed.y !== null) {
-                                        label += formatearDinero(context.parsed.y);
-                                    }
-                                    return label;
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { 
+                        position: window.innerWidth < 600 ? 'bottom' : 'top',
+                        labels: {
+                            boxWidth: window.innerWidth < 600 ? 10 : 40,
+                            font: { size: window.innerWidth < 600 ? 10 : 12 }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) label += ': ';
+                                if (context.parsed.y !== null) {
+                                    label += formatearDinero(context.parsed.y);
                                 }
+                                return label;
                             }
                         }
                     }
                 }
+            }
         });
     }
 });
