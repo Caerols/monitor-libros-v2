@@ -105,8 +105,8 @@ def ejecutar_etl():
     for url in listas_a_raspar:
         print(f"🕵️‍♂️ Raspando lista vía Proxy: {url}")
         try:
-            # Envolvemos la URL original dentro de la API del intermediario
-            scraper_url = f"http://api.scraperapi.com/?api_key={API_KEY}&url={url}"
+            # Añadimos &render=true para que la API ejecute el JS como un navegador real
+            scraper_url = f"http://api.scraperapi.com/?api_key={API_KEY}&render=true&url={url}"
             
             # Usamos el requests normal, la API se encarga de saltar los cortafuegos
             respuesta = requests.get(scraper_url)
