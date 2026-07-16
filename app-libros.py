@@ -108,30 +108,35 @@ def ejecutar_etl():
 
             for libro in libros_html:
                 caja_titulo = libro.find('div', class_='titulo')
-                
-                # Buscamos múltiples clases que Buscalibre usa para sus distintos precios
-                cajas_precio = libro.find_all(['div', 'p', 'span'], class_=['precioAhora', 'precio-ahora', 'precio-dcto', 'descuento'])
-                
-                if not caja_titulo or not cajas_precio:
-                    continue # Saltamos los agotados o defectuosos
+                if not caja_titulo:
+                    continue
                     
                 titulo = caja_titulo.text.strip()
                 
-                # Recolectamos todos los precios encontrados en la tarjeta
-                precios_encontrados = []
-                for caja in cajas_precio:
-                    numero_texto = re.sub(r'[^\d]', '', caja.text)
-                    if numero_texto:
-                        precios_encontrados.append(int(numero_texto))
+                # EXTRACCIÓN MODO FUERZA BRUTA:
+                # Buscamos cualquier texto que tenga un signo $ seguido de números en TODA la tarjeta
+                texto_tarjeta = libro.text
+                numeros_con_dolar = re.findall(r'\$\s*([\d\.]+)', texto_tarjeta)
                 
-                # Si no logramos extraer ningún número válido, saltamos el libro
+                precios_encontrados = []
+                for num_str in numeros_con_dolar:
+                    try:
+                        # Quitamos los puntos (ej: 9.090 -> 9090)
+                        valor = int(num_str.replace('.', ''))
+                        # Filtramos ceros o errores raros
+                        if valor > 0:
+                            precios_encontrados.append(valor)
+                    except:
+                        pass
+                
+                # Si no encontró ningún precio válido, salta al siguiente libro
                 if not precios_encontrados:
                     continue
                 
-                # La magia: obligamos al scraper a quedarse con el precio más barato que encontró
+                # Nos quedamos con el número más bajo de todos los encontrados
                 precio_limpio = min(precios_encontrados)
-
-                # Si el libro ya lo vimos en otra lista, nos quedamos con el que tenga el precio más bajo
+                
+                # Guardamos el libro
                 if titulo not in libros_procesados or precio_limpio < libros_procesados[titulo]["precio"]:
                     libros_procesados[titulo] = {
                         "titulo": titulo,
