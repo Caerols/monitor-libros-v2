@@ -92,35 +92,41 @@ def ejecutar_etl():
         conn.close()
         return
 
-    # -----------------------------------------
+# -----------------------------------------
     # 1 y 2. EXTRACT & TRANSFORM (Múltiples Listas)
     # -----------------------------------------
+    # Mantenemos la mejora del cloudscraper
     scraper = cloudscraper.create_scraper(browser={'browser': 'chrome', 'platform': 'windows', 'desktop': True})
-    libros_procesados = {} # Usamos un diccionario para evitar duplicados
+    
+    # Le inyectamos la credencial exacta que usaba tu Cazador antiguo
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    }
+    
+    libros_procesados = {} 
 
     for url in listas_a_raspar:
         print(f"🕵️‍♂️ Raspando lista: {url}")
         try:
-            respuesta = scraper.get(url)
+            # Disparamos el scraper pro, pero forzando los headers
+            respuesta = scraper.get(url, headers=headers)
             respuesta.raise_for_status()
             soup = BeautifulSoup(respuesta.text, 'html.parser')
             
-            # Usamos el mismo selector que tu app antigua
+            # Usamos el contenedor exacto de tu app antigua
             cajas_libros = soup.find_all('div', class_='contenedorProducto')
 
             for caja in cajas_libros:
-                # Extraemos el título y el precio usando la lógica de tu versión clásica
                 enlace = caja.find('a')
                 titulo = enlace.get('title') if enlace else None
                 precio_elemento = caja.find(class_='precioAhora')
                 
                 if not titulo or not precio_elemento:
-                    continue # Saltamos los que vengan defectuos
+                    continue 
                     
                 titulo = titulo.strip()
                 precio_limpio = int(re.sub(r'[^\d]', '', precio_elemento.text.strip()))
                 
-                # Lo agregamos al diccionario verificando que siempre quede el más barato
                 if titulo not in libros_procesados or precio_limpio < libros_procesados[titulo]["precio"]:
                     libros_procesados[titulo] = {
                         "titulo": titulo,
@@ -206,10 +212,16 @@ def ejecutar_etl():
         cursor.close()
         conn.close()
 
-mensaje_final = {
-    "content": "✅ **Matriz actualizada:** El escaneo diario de Buscalibre ha finalizado con éxito. Los datos están seguros en Supabase."
-}
-requests.post(os.getenv("DISCORD_WEBHOOK"), json=mensaje_final)
-
+if __name__ == "__main__":
+    # 1. Primero, hace todo el trabajo de extracción y guardado
+    ejecutar_etl()
+    
+    # 2. Solo cuando termina, envía el reporte final de éxito
+    webhook = os.getenv("DISCORD_WEBHOOK")
+    if webhook:
+        mensaje_final = {
+            "content": "✅ **Matriz actualizada:** El escaneo diario de Buscalibre ha finalizado con éxito. Los datos están seguros en Supabase."
+        }
+        requests.post(webhook, json=mensaje_final)
 if __name__ == "__main__":
     ejecutar_etl()
