@@ -146,7 +146,7 @@ def ejecutar_etl():
         print("No se extrajeron libros en ninguna lista.")
         cursor.close()
         conn.close()
-        return
+        return "ERROR_VACIO" # Avisamos que la lista quedó vacía
 
     try:
         hoy = datetime.now()
@@ -179,18 +179,14 @@ def ejecutar_etl():
                 """, (titulo, data["estado"]))
                 id_libro = cursor.fetchone()[0]
                 precio_target = None
-                print(f"📖 Nuevo libro registrado en BD: {titulo}")
                 
             # C. Lógica de Alertas Inteligentes
             cursor.execute("SELECT MIN(precio) FROM fact_precio WHERE id_libro = %s", (id_libro,))
             resultado_min = cursor.fetchone()
             precio_minimo_historico = resultado_min[0]
 
-            # Alerta 1: Cumplió tu Target de presupuesto
             if precio_target and precio_actual <= precio_target:
                 enviar_alerta_discord(titulo, precio_actual, precio_target, motivo="target")
-            
-            # Alerta 2: Es un nuevo Mínimo Histórico absoluto
             elif precio_minimo_historico is not None and precio_actual < precio_minimo_historico:
                 enviar_alerta_discord(titulo, precio_actual, precio_minimo_historico, motivo="minimo")
 
@@ -199,29 +195,25 @@ def ejecutar_etl():
                 INSERT INTO fact_precio (id_libro, id_fecha, precio)
                 VALUES (%s, %s, %s)
             """, (id_libro, id_fecha_hoy, precio_actual))
-            
-            print(f"💰 Precio guardado: {titulo} a ${precio_actual}")
 
         conn.commit()
-        print("✅ ETL finalizado con éxito.")
+        return "EXITO" # Avisamos que todo se guardó bien
         
     except Exception as e:
-        print(f"❌ Error durante la inserción en la base de datos: {e}")
         conn.rollback()
+        return f"ERROR_DB: {e}" # Avisamos si la base de datos explota
     finally:
         cursor.close()
         conn.close()
 
 if __name__ == "__main__":
-    # 1. Primero, hace todo el trabajo de extracción y guardado
-    ejecutar_etl()
-    
-    # 2. Solo cuando termina, envía el reporte final de éxito
+    resultado = ejecutar_etl()
     webhook = os.getenv("DISCORD_WEBHOOK")
+    
     if webhook:
-        mensaje_final = {
-            "content": "✅ **Matriz actualizada:** El escaneo diario de Buscalibre ha finalizado con éxito. Los datos están seguros en Supabase."
-        }
-        requests.post(webhook, json=mensaje_final)
-if __name__ == "__main__":
-    ejecutar_etl()
+        if resultado == "EXITO":
+             requests.post(webhook, json={"content": "✅ **Matriz actualizada:** El escaneo diario de Buscalibre ha finalizado con éxito. Los datos están seguros en Supabase."})
+        elif resultado == "ERROR_VACIO":
+             requests.post(webhook, json={"content": "⚠️ **Alerta de Bloqueo:** El scraper funcionó, pero la lista de libros llegó vacía. Es muy probable que el Firewall de Buscalibre haya detectado y bloqueado la IP del servidor."})
+        else:
+             requests.post(webhook, json={"content": f"❌ **Falla Crítica:** El proceso no pudo terminar. Detalle: {resultado}"})
