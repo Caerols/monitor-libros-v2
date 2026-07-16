@@ -92,24 +92,24 @@ def ejecutar_etl():
         conn.close()
         return
 
-# -----------------------------------------
+    # -----------------------------------------
     # 1 y 2. EXTRACT & TRANSFORM (Múltiples Listas)
     # -----------------------------------------
-    # Mantenemos la mejora del cloudscraper
-    scraper = cloudscraper.create_scraper(browser={'browser': 'chrome', 'platform': 'windows', 'desktop': True})
-    
-    # Le inyectamos la credencial exacta que usaba tu Cazador antiguo
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-    }
-    
     libros_procesados = {} 
+    API_KEY = os.getenv("SCRAPER_API_KEY")
+
+    if not API_KEY:
+        print("⚠️ Cuidado: No se encontró la SCRAPER_API_KEY en las variables de entorno.")
+        return "ERROR_API_KEY"
 
     for url in listas_a_raspar:
-        print(f"🕵️‍♂️ Raspando lista: {url}")
+        print(f"🕵️‍♂️ Raspando lista vía Proxy: {url}")
         try:
-            # Disparamos el scraper pro, pero forzando los headers
-            respuesta = scraper.get(url, headers=headers)
+            # Envolvemos la URL original dentro de la API del intermediario
+            scraper_url = f"http://api.scraperapi.com/?api_key={API_KEY}&url={url}"
+            
+            # Usamos el requests normal, la API se encarga de saltar los cortafuegos
+            respuesta = requests.get(scraper_url)
             respuesta.raise_for_status()
             soup = BeautifulSoup(respuesta.text, 'html.parser')
             
