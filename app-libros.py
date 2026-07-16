@@ -104,39 +104,23 @@ def ejecutar_etl():
             respuesta = scraper.get(url)
             respuesta.raise_for_status()
             soup = BeautifulSoup(respuesta.text, 'html.parser')
-            libros_html = soup.find_all('div', class_='producto')
+            
+            # Usamos el mismo selector que tu app antigua
+            cajas_libros = soup.find_all('div', class_='contenedorProducto')
 
-            for libro in libros_html:
-                caja_titulo = libro.find('div', class_='titulo')
-                if not caja_titulo:
-                    continue
+            for caja in cajas_libros:
+                # Extraemos el título y el precio usando la lógica de tu versión clásica
+                enlace = caja.find('a')
+                titulo = enlace.get('title') if enlace else None
+                precio_elemento = caja.find(class_='precioAhora')
+                
+                if not titulo or not precio_elemento:
+                    continue # Saltamos los que vengan defectuos
                     
-                titulo = caja_titulo.text.strip()
+                titulo = titulo.strip()
+                precio_limpio = int(re.sub(r'[^\d]', '', precio_elemento.text.strip()))
                 
-                # EXTRACCIÓN MODO FUERZA BRUTA:
-                # Buscamos cualquier texto que tenga un signo $ seguido de números en TODA la tarjeta
-                texto_tarjeta = libro.text
-                numeros_con_dolar = re.findall(r'\$\s*([\d\.]+)', texto_tarjeta)
-                
-                precios_encontrados = []
-                for num_str in numeros_con_dolar:
-                    try:
-                        # Quitamos los puntos (ej: 9.090 -> 9090)
-                        valor = int(num_str.replace('.', ''))
-                        # Filtramos ceros o errores raros
-                        if valor > 0:
-                            precios_encontrados.append(valor)
-                    except:
-                        pass
-                
-                # Si no encontró ningún precio válido, salta al siguiente libro
-                if not precios_encontrados:
-                    continue
-                
-                # Nos quedamos con el número más bajo de todos los encontrados
-                precio_limpio = min(precios_encontrados)
-                
-                # Guardamos el libro
+                # Lo agregamos al diccionario verificando que siempre quede el más barato
                 if titulo not in libros_procesados or precio_limpio < libros_procesados[titulo]["precio"]:
                     libros_procesados[titulo] = {
                         "titulo": titulo,
