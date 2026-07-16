@@ -108,14 +108,29 @@ def ejecutar_etl():
 
             for libro in libros_html:
                 caja_titulo = libro.find('div', class_='titulo')
-                caja_precio = libro.find('div', class_='precioAhora')
                 
-                if not caja_titulo or not caja_precio:
+                # Buscamos múltiples clases que Buscalibre usa para sus distintos precios
+                cajas_precio = libro.find_all(['div', 'p', 'span'], class_=['precioAhora', 'precio-ahora', 'precio-dcto', 'descuento'])
+                
+                if not caja_titulo or not cajas_precio:
                     continue # Saltamos los agotados o defectuosos
                     
                 titulo = caja_titulo.text.strip()
-                precio_limpio = int(re.sub(r'[^\d]', '', caja_precio.text))
                 
+                # Recolectamos todos los precios encontrados en la tarjeta
+                precios_encontrados = []
+                for caja in cajas_precio:
+                    numero_texto = re.sub(r'[^\d]', '', caja.text)
+                    if numero_texto:
+                        precios_encontrados.append(int(numero_texto))
+                
+                # Si no logramos extraer ningún número válido, saltamos el libro
+                if not precios_encontrados:
+                    continue
+                
+                # La magia: obligamos al scraper a quedarse con el precio más barato que encontró
+                precio_limpio = min(precios_encontrados)
+
                 # Si el libro ya lo vimos en otra lista, nos quedamos con el que tenga el precio más bajo
                 if titulo not in libros_procesados or precio_limpio < libros_procesados[titulo]["precio"]:
                     libros_procesados[titulo] = {
@@ -123,6 +138,7 @@ def ejecutar_etl():
                         "precio": precio_limpio,
                         "estado": "Disponible"
                     }
+
         except Exception as e:
             print(f"⚠️ Error al extraer datos de la lista {url}: {e}")
 
