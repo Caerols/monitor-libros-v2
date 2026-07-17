@@ -33,6 +33,67 @@
                 <h1>📚 Catálogo de Libros</h1>
                 <p>Tu colección personal. Pasa el ratón sobre un libro para ver sus detalles.</p>
             </header>
+            <!-- BOTÓN PARA AGREGAR LIBRO -->
+            <div style="margin-bottom: 20px; text-align: right;">
+                <button id="btn-abrir-modal" class="btn-primario">+ Ingresar Nuevo Expediente</button>
+            </div>
+
+            <!-- MODAL DE INGRESO (Oculto por defecto) -->
+            <div id="modal-libro" class="modal-oculto">
+                <div class="modal-contenido">
+                    <span class="cerrar-modal" id="btn-cerrar-modal">&times;</span>
+                    <h2>📝 Registrar Nuevo Libro</h2>
+                    <p style="color: #666; font-size: 14px; margin-bottom: 15px;">
+                        Ingresa el Título y Autor, luego presiona el botón mágico para que la Bibliotecaria investigue el resto.
+                    </p>
+                    
+                    <div class="formulario-grid">
+                        <!-- Datos Básicos -->
+                        <div class="form-grupo">
+                            <label>Título del libro *</label>
+                            <input type="text" id="form-titulo" placeholder="Ej: Dune">
+                        </div>
+                        <div class="form-grupo">
+                            <label>Autor *</label>
+                            <input type="text" id="form-autor" placeholder="Ej: Frank Herbert">
+                        </div>
+                        
+                        <!-- El Botón Mágico -->
+                        <div class="form-grupo" style="grid-column: 1 / -1; text-align: center;">
+                            <button id="btn-autocompletar" class="btn-magico">✨ Autocompletar Ficha Técnica</button>
+                            <span id="mensaje-investigacion" style="margin-left: 10px; font-size: 13px; font-weight: bold;"></span>
+                        </div>
+
+                        <!-- Datos Técnicos (Se llenarán solos) -->
+                        <div class="form-grupo">
+                            <label>Editorial</label>
+                            <input type="text" id="form-editorial">
+                        </div>
+                        <div class="form-grupo">
+                            <label>Año</label>
+                            <input type="number" id="form-anio">
+                        </div>
+                        <div class="form-grupo">
+                            <label>Nº de Páginas</label>
+                            <input type="number" id="form-paginas">
+                        </div>
+                        <div class="form-grupo">
+                            <label>Palabras (Estimado)</label>
+                            <input type="number" id="form-palabras">
+                        </div>
+                        <div class="form-grupo">
+                            <label>ISBN</label>
+                            <input type="text" id="form-isbn">
+                        </div>
+                        
+                        <!-- Resumen -->
+                        <div class="form-grupo" style="grid-column: 1 / -1;">
+                            <label>Resumen / Observaciones</label>
+                            <textarea id="form-resumen" rows="3" placeholder="Sinopsis del libro..."></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             <!-- CUADRÍCULA DEL CATÁLOGO -->
             <section class="catalogo-grid" id="catalogo-container">

@@ -5,53 +5,68 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BI - Monitor de Libros | Matriz Central</title>
     <link rel="stylesheet" href="css/style.css">
+    <!-- Agregamos el CSS de la biblioteca para heredar el diseño del menú lateral -->
+    <link rel="stylesheet" href="css/biblioteca.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-    <div class="dashboard-container">
-        <header class="dashboard-header">
-            <h1>📊 Decisiones de Compra</h1>
-            <p>Dashboard de Inteligencia de Negocios y Archivo</p>
-        </header>
-
-        <!-- Controles y Filtros -->
-        <section class="panel-control">
-            <label for="filtroLibro">📚 Analizar libro:</label>
-            <select id="filtroLibro" class="select-moderno">
-                <option value="Todos">Vista General (Todos los libros)</option>
-            </select>
-        </section>
-
-        <!-- Motor de Predicciones -->
-        <section id="alertaInteligente" class="alerta oculta" aria-live="polite"></section>
-
-        <!-- Mensaje de Carga -->
-        <div id="loader" class="loader-activo">
-            ⏳ Conectando con los servidores centrales en la nube...
-        </div>
-
-        <!-- Tarjetas de Resumen (KPIs) -->
-        <section id="kpi-container" style="display: none;">
-            <div class="kpi-card">
-                <h3>💰 Precio Actual</h3>
-                <p id="kpi-current">--</p>
+    <div class="app-layout">
+        
+        <!-- SUBMENÚ LATERAL (Igual al de la Biblioteca) -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>Matriz Central</h2>
             </div>
-            
-            <div class="kpi-card">
-                <h3>📉 Mínimo Histórico</h3>
-                <p id="kpi-min">--</p>
-            </div>
-            
-            <div class="kpi-card">
-                <h3>📈 Tendencia</h3>
-                <p id="kpi-trend">--</p>
-            </div>
-        </section>
+            <nav class="sidebar-nav">
+                <p class="nav-section">Módulo Principal</p>
+                <!-- Aquí le ponemos la clase "active" a esta página -->
+                <a href="index.html" class="nav-link active">📊 Ofertas e Historial</a>
+                
+                <p class="nav-section">Mi Biblioteca</p>
+                <!-- Y quitamos el "active" de este link -->
+                <a href="biblioteca.html" class="nav-link">📚 Catálogo</a>
+                <a href="#" class="nav-link">📈 Estadísticas</a>
+                <a href="#" class="nav-link">❤️ Wishlist</a>
+                <a href="#" class="nav-link">🏆 Logros</a>
+            </nav>
+        </aside>
 
-        <!-- Gráfico Principal -->
-        <main class="chart-box">
-            <canvas id="graficoPrecios"></canvas>
+        <!-- CONTENIDO PRINCIPAL (Tu Dashboard Original) -->
+        <main class="main-content">
+            <div class="dashboard-container" style="max-width: 100%; padding: 0;">
+                <header class="dashboard-header">
+                    <h1>📊 Decisiones de Compra</h1>
+                    <p>Dashboard de Inteligencia de Negocios y Archivo</p>
+                </header>
+
+                <!-- Controles y Filtros -->
+                <section class="panel-control">
+                    <label for="filtroLibro">📚 Analizar libro:</label>
+                    <select id="filtroLibro" class="select-moderno">
+                        <option value="Todos">Vista General (Todos los libros)</option>
+                    </select>
+                </section>
+
+                <!-- Motor de Predicciones -->
+                <section id="alertaInteligente" class="alerta oculta" aria-live="polite"></section>
+
+                <!-- Mensaje de Carga -->
+                <div id="loader" class="loader-activo">
+                    ⏳ Conectando con los servidores centrales en la nube...
+                </div>
+
+                <!-- Tarjetas de Resumen (KPIs) -->
+                <section id="kpi-container" style="display: none;">
+                    <!-- Se llenan por JS -->
+                </section>
+
+                <!-- Gráfico Principal -->
+                <main class="chart-box">
+                    <canvas id="graficoPrecios"></canvas>
+                </main>
+            </div>
         </main>
+        
     </div>
 
     <!-- Lógica de la aplicación -->

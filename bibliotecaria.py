@@ -188,6 +188,34 @@ class BotDatabaseOperations:
                 """
                 cursor.execute(query)
                 return cursor.fetchall()
+            
+    @staticmethod
+    def buscar_info_libro(titulo: str, autor: str):
+        """Consulta Google Books API para completar la ficha técnica."""
+        url = f"https://www.googleapis.com/books/v1/volumes?q=intitle:{titulo}+inauthor:{autor}&maxResults=1"
+        try:
+            response = requests.get(url, timeout=10)
+            data = response.json()
+            
+            if 'items' not in data:
+                return None
+            
+            info = data['items'][0]['volumeInfo']
+            
+            # Cálculo estimado de palabras: promedio 250 palabras por página
+            paginas = info.get('pageCount', 0)
+            
+            return {
+                "titulo": info.get('title'),
+                "editorial": info.get('publisher', 'Desconocido'),
+                "anio": str(info.get('publishedDate', '0000'))[:4],
+                "paginas": paginas,
+                "palabras": paginas * 250, # Estimación estándar
+                "resumen": info.get('description', 'Sin resumen disponible.'),
+                "isbn": info.get('industryIdentifiers', [{}])[0].get('identifier', 'N/A')
+            }
+        except Exception:
+            return None
 
 # =====================================================================
 # SISTEMA DE SOPORTE VITAL Y API CENTRAL (FastAPI)
@@ -214,6 +242,18 @@ def obtener_catalogo_api():
         return {"catalogo": datos}
     except Exception as e:
         return {"error": str(e)}
+
+@app.get("/api/biblioteca/investigar")
+def investigar_libro_api(titulo: str, autor: str):
+    """Endpoint para que el frontend consulte la API de Google Books"""
+    try:
+        datos = BotDatabaseOperations.buscar_info_libro(titulo, autor)
+        if datos:
+            return {"exito": True, "datos": datos}
+        else:
+            return {"exito": False, "error": "No encontré registros en los archivos mundiales para ese título y autor."}
+    except Exception as e:
+        return {"exito": False, "error": str(e)}
 
 @app.get("/api/historial")
 def obtener_historial():
