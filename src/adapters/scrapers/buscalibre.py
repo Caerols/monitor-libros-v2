@@ -1,6 +1,8 @@
 # src/adapters/scrapers/buscalibre.py
 import logging
+import random
 import requests
+from urllib.parse import urljoin
 from bs4 import BeautifulSoup
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 from typing import List
@@ -13,49 +15,62 @@ from src.config.settings import config
 # Configuración de Logging Estructurado
 logger = logging.getLogger(__name__)
 
+# Pool de User-Agents modernos para evasión de fingerprinting (WAF)
+USER_AGENTS = [
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:121.0) Gecko/20100101 Safari/605.1.15"
+]
+
 class BuscalibreScraper(BaseScraper):
     def __init__(self):
-        # Nivel 1: Headers para simular ser un navegador real y evitar detección temprana
-        self.headers = {
-            "User-Agent": config.USER_AGENT,
+        # Nivel 1: Usar una Sesión reutiliza la conexión TCP subyacente (mucho más rápido)
+        self.session = requests.Session()
+        
+    def _get_random_headers(self) -> dict:
+        """Genera cabeceras dinámicas para cada petición, evitando baneos por huella."""
+        return {
+            "User-Agent": random.choice(USER_AGENTS),
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
             "Accept-Language": "es-CL,es;q=0.9,en-US;q=0.8,en;q=0.7",
             "Connection": "keep-alive",
-            "Upgrade-Insecure-Requests": "1"
+            "Upgrade-Insecure-Requests": "1",
+            "DNT": "1" # Do Not Track flag
         }
 
     def _verificar_bloqueo(self, html: str, status_code: int):
         """Audita la respuesta para detectar Firewalls o CAPTCHAs."""
         html_lower = html.lower()
         if status_code in (403, 429, 503) or "cloudflare" in html_lower or "just a moment" in html_lower:
-            raise BlockedIPError("WAF o Cloudflare detectado. Acceso denegado por Buscalibre.")
+            raise BlockedIPError("WAF o Cloudflare detectado. Acceso temporalmente denegado por Buscalibre.")
 
     def _peticion_directa(self, url: str) -> str:
-        """Estrategia 1: Coste 0. Petición directa simulando navegador."""
-        logger.info(f"Intentando petición directa a: {url}")
-        response = requests.get(url, headers=self.headers, timeout=15)
+        """Estrategia 1: Coste 0. Petición directa simulando un navegador real."""
+        logger.info(f"🌐 Intentando petición directa a: {url}")
         
-        # Nueva validación: Si la URL no existe, lanzamos un error de dominio que el orquestador sepa manejar
+        # Timeout compuesto: (5s para conectar al servidor, 15s para descargar el HTML)
+        response = self.session.get(url, headers=self._get_random_headers(), timeout=(5, 15))
+        
         if response.status_code == 404:
-            raise EmptyDOMError(f"Error 404: La URL solicitada no existe o fue eliminada en Buscalibre ({url}).")
+            raise EmptyDOMError(f"Error 404: La URL solicitada no existe o fue eliminada ({url}).")
             
         self._verificar_bloqueo(response.text, response.status_code)
         response.raise_for_status()
         return response.text
 
     def _peticion_rescate_api(self, url: str) -> str:
-        """Estrategia 2: Rescate. Usa ScraperAPI solo si la directa falló."""
-        if not config.SCRAPER_API_KEY:
-            raise BlockedIPError("Bloqueo detectado y no hay SCRAPER_API_KEY configurada para rescate.")
+        """Estrategia 2: Rescate proxy. Usa ScraperAPI solo si la directa falló."""
+        if not getattr(config, 'SCRAPER_API_KEY', None):
+            raise BlockedIPError("Bloqueo detectado y no hay SCRAPER_API_KEY configurada para protocolo de rescate.")
             
-        logger.warning(f"Activando protocolo de rescate con ScraperAPI para: {url}")
+        logger.warning(f"🚨 Activando protocolo de rescate con ScraperAPI para: {url}")
         api_url = f"http://api.scraperapi.com/?api_key={config.SCRAPER_API_KEY}&url={url}&render=true"
         
-        # Timeout más largo porque la API debe renderizar JS
-        response = requests.get(api_url, timeout=45) 
+        response = self.session.get(api_url, timeout=(10, 45)) 
         self._verificar_bloqueo(response.text, response.status_code)
         
-        # Validar headers específicos de ScraperAPI que indican problemas
         sa_status = response.headers.get("sa-statuscode")
         if sa_status and int(sa_status) >= 400:
             raise BlockedIPError(f"ScraperAPI falló con sa-statuscode: {sa_status}")
@@ -67,13 +82,12 @@ class BuscalibreScraper(BaseScraper):
         try:
             return self._peticion_directa(url)
         except BlockedIPError as e:
-            logger.error(f"Fallo directo: {str(e)}")
+            logger.error(f"⚠️ Fallo directo: {str(e)}. Intentando evasión...")
             return self._peticion_rescate_api(url)
             
-    # El decorador @retry envolverá todo el proceso de extracción.
-    # Si detecta errores de red o bloqueos persistentes, esperará e intentará hasta 3 veces.
+    # Exponential Backoff: Si falla por red o bloqueo, espera 4s, 8s, 16s...
     @retry(
-        stop=stop_after_attempt(config.MAX_RETRIES),
+        stop=stop_after_attempt(getattr(config, 'MAX_RETRIES', 3)),
         wait=wait_exponential(multiplier=2, min=4, max=15),
         retry=retry_if_exception_type((requests.exceptions.RequestException, BlockedIPError)),
         reraise=True
@@ -82,45 +96,41 @@ class BuscalibreScraper(BaseScraper):
         html = self._obtener_html_resiliente(url)
         soup = BeautifulSoup(html, "html.parser")
         
-        # Validaciones Defensivas
         cajas_libros = soup.find_all("div", class_="contenedorProducto")
         
+        # Data Quality Gate 1: Validación del DOM
         if not cajas_libros:
-            # Observabilidad vital: Si falla, guardamos los primeros 1000 caracteres para depurar
-            logger.error(f"HTML recibido (primeros 1000 chars): {html[:1000]}")
-            raise EmptyDOMError(f"No se encontraron libros en {url}. Posible cambio de diseño en Buscalibre.")
+            logger.error(f"HTML recibido (primeros 500 chars): {html[:500]}")
+            raise EmptyDOMError(f"No se encontraron contenedores en {url}. Posible cambio de diseño CSS en Buscalibre.")
 
         libros_extraidos = []
         for caja in cajas_libros:
             try:
-                # 1. Extraer ID y Precio directo desde los atributos (mucho más seguro y rápido)
                 id_tienda = caja.get("data-id_producto", "DESCONOCIDO")
                 precio_str = caja.get("data-precio")
                 
-                # Si la caja no tiene precio (ej. libros agotados o error de carga), lo saltamos
-                if not precio_str or not precio_str.isdigit():
+                # Data Quality Gate 2: Precio válido
+                if not precio_str or not precio_str.replace('.', '').isdigit():
                     continue 
                     
                 precio_limpio = float(precio_str)
                 
-                # 2. Extraer Título y URL desde el enlace
                 enlace = caja.find("a")
-                if not enlace or not enlace.get("title"):
+                if not enlace or not enlace.get("title") or not enlace.get("href"):
                     continue
                     
                 titulo = enlace.get("title").strip()
-                url_libro = enlace.get("href", url)
+                # Data Quality Gate 3: Sanitización de URL (Asegura formato https://...)
+                url_libro = urljoin("https://www.buscalibre.cl", enlace.get("href"))
                 
-                # 3. Extraer Descuento (opcional, por si queremos enviarlo a Discord)
                 descuento_porcentaje = None
                 div_dcto = caja.find("div", class_="dcto")
                 if div_dcto and "%" in div_dcto.text:
-                    # Limpiamos el texto "- 45 %" para que quede solo "45.0"
                     dcto_limpio = div_dcto.text.replace("-", "").replace("%", "").strip()
                     try:
                         descuento_porcentaje = float(dcto_limpio)
                     except ValueError:
-                        pass # Si falla al convertir, simplemente lo dejamos en None
+                        pass 
 
                 libro = Libro(
                     id_tienda=id_tienda,
@@ -131,7 +141,7 @@ class BuscalibreScraper(BaseScraper):
                 )
                 libros_extraidos.append(libro)
             except Exception as e:
-                logger.warning(f"Error parseando un libro individual: {str(e)}. Saltando al siguiente.")
+                logger.warning(f"Error extrayendo caja individual (ID: {id_tienda}): {str(e)}. Saltando.")
 
-        logger.info(f"Extracción exitosa. {len(libros_extraidos)} libros encontrados.")
+        logger.info(f"✅ Extracción exitosa. {len(libros_extraidos)} libros encontrados.")
         return libros_extraidos

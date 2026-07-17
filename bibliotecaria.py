@@ -1,7 +1,6 @@
 import os
 import discord
 import asyncio
-import threading
 from discord.ext import commands
 from dotenv import load_dotenv
 from fastapi import FastAPI
@@ -9,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from psycopg2.extras import RealDictCursor
 import uvicorn
 
-# --- IMPORTACIONES DE LA NUEVA ARQUITECTURA ---
+# --- IMPORTACIONES DE LA ARQUITECTURA ---
 from src.config.settings import config
 from src.adapters.database.connection import DatabasePool
 from src.adapters.scrapers.buscalibre import BuscalibreScraper
@@ -21,10 +20,150 @@ from src.use_cases.process_books import GeneradorAlertasBuscalibre
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 
-# Inicializar el Pool de Base de Datos para todo el sistema
-DatabasePool.initialize()
+# =====================================================================
+# CAPA DE DATOS (Aislada de los comandos de Discord)
+# =====================================================================
+class BotDatabaseOperations:
+    """Encapsula todas las consultas SQL directas que el Bot y la API necesitan."""
+    
+    @staticmethod
+    def obtener_historial_api():
+        with DatabasePool.get_connection() as conn:
+            with conn.cursor() as cursor:
+                query = """
+                    SELECT l.titulo, f.fecha_exacta, p.precio
+                    FROM fact_precio p
+                    JOIN dim_libro l ON p.id_libro = l.id_libro
+                    JOIN dim_fecha f ON p.id_fecha = f.id_fecha
+                    ORDER BY l.titulo, f.fecha_exacta;
+                """
+                cursor.execute(query)
+                return [{"titulo": f[0], "fecha": str(f[1]), "precio": f[2]} for f in cursor.fetchall()]
 
-# --- SISTEMA DE SOPORTE VITAL Y API CENTRAL ---
+    @staticmethod
+    def agregar_lista(link: str):
+        with DatabasePool.get_connection() as conn:
+            with conn.cursor() as cursor:
+                query = "INSERT INTO listas_monitoreo (url_lista) VALUES (%s) ON CONFLICT (url_lista) DO NOTHING;"
+                cursor.execute(query, (link,))
+                conn.commit()
+
+    @staticmethod
+    def obtener_ofertas():
+        with DatabasePool.get_connection() as conn:
+            with conn.cursor() as cursor:
+                query = """
+                    WITH Minimos AS (
+                        SELECT id_libro, MIN(precio) as min_historico FROM fact_precio GROUP BY id_libro
+                    ),
+                    UltimosPrecios AS (
+                        SELECT p.id_libro, p.precio as precio_actual 
+                        FROM fact_precio p
+                        JOIN dim_fecha f ON p.id_fecha = f.id_fecha
+                        WHERE f.fecha_exacta = (SELECT MAX(fecha_exacta) FROM dim_fecha)
+                    )
+                    SELECT l.titulo, u.precio_actual
+                    FROM UltimosPrecios u
+                    JOIN Minimos m ON u.id_libro = m.id_libro
+                    JOIN dim_libro l ON u.id_libro = l.id_libro
+                    WHERE u.precio_actual <= m.min_historico;
+                """
+                cursor.execute(query)
+                return cursor.fetchall()
+
+    @staticmethod
+    def actualizar_ficha_lectura(titulo: str, autor: str, estado: str):
+        with DatabasePool.get_connection() as conn:
+            with conn.cursor() as cursor:
+                query = """
+                    INSERT INTO fichas_lectura (titulo, autor, estado_lectura) 
+                    VALUES (%s, %s, %s)
+                    ON CONFLICT (titulo) 
+                    DO UPDATE SET estado_lectura = EXCLUDED.estado_lectura, 
+                                  autor = COALESCE(EXCLUDED.autor, fichas_lectura.autor), 
+                                  fecha_actualizacion = CURRENT_TIMESTAMP;
+                """
+                cursor.execute(query, (titulo, autor, estado))
+                conn.commit()
+
+    @staticmethod
+    def obtener_estante():
+        with DatabasePool.get_connection() as conn:
+            with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                query = "SELECT titulo, autor, estado_lectura FROM fichas_lectura ORDER BY fecha_actualizacion DESC;"
+                cursor.execute(query)
+                return cursor.fetchall()
+
+    @staticmethod
+    def consultar_precio(nombre_libro: str):
+        with DatabasePool.get_connection() as conn:
+            with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                query = """
+                    SELECT l.titulo, f.precio, l.precio_target, 
+                           (SELECT MIN(precio) FROM fact_precio WHERE id_libro = l.id_libro) as precio_minimo
+                    FROM dim_libro l
+                    JOIN fact_precio f ON l.id_libro = f.id_libro
+                    WHERE l.titulo ILIKE %s
+                    ORDER BY f.id_fecha DESC, f.hora_monitoreo DESC
+                    LIMIT 1;
+                """
+                cursor.execute(query, (f"%{nombre_libro}%",))
+                return cursor.fetchone()
+
+    @staticmethod
+    def agregar_libro(titulo: str, link: str):
+        with DatabasePool.get_connection() as conn:
+            with conn.cursor() as cursor:
+                query = """
+                    INSERT INTO dim_libro (titulo, url_buscalibre, estado)
+                    VALUES (%s, %s, 'Activo')
+                    ON CONFLICT (url_buscalibre) DO UPDATE SET titulo = EXCLUDED.titulo;
+                """
+                cursor.execute(query, (titulo, link))
+                conn.commit()
+
+    @staticmethod
+    def fijar_target(precio: int, nombre_libro: str) -> int:
+        with DatabasePool.get_connection() as conn:
+            with conn.cursor() as cursor:
+                query = "UPDATE dim_libro SET precio_target = %s WHERE titulo ILIKE %s;"
+                cursor.execute(query, (precio, f"%{nombre_libro}%"))
+                conn.commit()
+                return cursor.rowcount
+
+    @staticmethod
+    def obtener_resumen():
+        with DatabasePool.get_connection() as conn:
+            with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                query = """
+                    WITH PreciosActuales AS (
+                        SELECT 
+                            l.id_libro,
+                            l.titulo,
+                            f.precio AS precio_actual,
+                            RANK() OVER(PARTITION BY l.id_libro ORDER BY f.id_fecha DESC, f.hora_monitoreo DESC) as rank_fecha
+                        FROM dim_libro l
+                        JOIN fact_precio f ON l.id_libro = f.id_libro
+                    ),
+                    PreciosMinimos AS (
+                        SELECT id_libro, MIN(precio) AS precio_minimo
+                        FROM fact_precio
+                        GROUP BY id_libro
+                    )
+                    SELECT pa.titulo, pa.precio_actual, pm.precio_minimo
+                    FROM PreciosActuales pa
+                    JOIN PreciosMinimos pm ON pa.id_libro = pm.id_libro
+                    WHERE pa.rank_fecha = 1
+                    ORDER BY pa.precio_actual ASC
+                    LIMIT 3;
+                """
+                cursor.execute(query)
+                return cursor.fetchall()
+
+
+# =====================================================================
+# SISTEMA DE SOPORTE VITAL Y API CENTRAL (FastAPI)
+# =====================================================================
 app = FastAPI(title="Matriz Central: Bot & API")
 
 app.add_middleware(
@@ -41,34 +180,24 @@ def home():
 
 @app.get("/api/historial")
 def obtener_historial():
-    """Endpoint que devuelve el historial de precios de todos los libros para el frontend"""
+    """Endpoint que devuelve el historial de precios para el frontend"""
     try:
-        with DatabasePool.get_connection() as conn:
-            with conn.cursor() as cursor:
-                query = """
-                    SELECT l.titulo, f.fecha_exacta, p.precio
-                    FROM fact_precio p
-                    JOIN dim_libro l ON p.id_libro = l.id_libro
-                    JOIN dim_fecha f ON p.id_fecha = f.id_fecha
-                    ORDER BY l.titulo, f.fecha_exacta;
-                """
-                cursor.execute(query)
-                resultados = cursor.fetchall()
-                
-                datos = [{"titulo": fila[0], "fecha": str(fila[1]), "precio": fila[2]} for fila in resultados]
-                return {"historial": datos}
+        datos = BotDatabaseOperations.obtener_historial_api()
+        return {"historial": datos}
     except Exception as e:
         return {"error": str(e)}
 
-def run_api():
+async def start_api():
+    """Lanza FastAPI de manera cooperativa dentro del Event Loop de Discord"""
     port = int(os.getenv("PORT", 8080))
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    config = uvicorn.Config(app, host="0.0.0.0", port=port, log_level="info")
+    server = uvicorn.Server(config)
+    await server.serve()
 
-def mantener_vivo():
-    hilo = threading.Thread(target=run_api, daemon=True)
-    hilo.start()
 
-# --- CONFIGURACIÓN DEL BOT ---
+# =====================================================================
+# CONFIGURACIÓN DEL BOT DE DISCORD
+# =====================================================================
 intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix='!', intents=intents, help_command=None)
@@ -109,13 +238,8 @@ async def lista(ctx, link: str):
     if "buscalibre" not in link.lower():
         await ctx.send("❌ Ese no parece un enlace válido de Buscalibre.")
         return
-
     try:
-        with DatabasePool.get_connection() as conn:
-            with conn.cursor() as cursor:
-                query = "INSERT INTO listas_monitoreo (url_lista) VALUES (%s) ON CONFLICT (url_lista) DO NOTHING;"
-                cursor.execute(query, (link,))
-                conn.commit()
+        await asyncio.to_thread(BotDatabaseOperations.agregar_lista, link)
         await ctx.send("🔗 Lista compartida añadida con éxito a los archivos. El scraper la revisará en su próxima ronda.")
     except Exception as e:
         await ctx.send(f"⚠️ Error: {e}")
@@ -126,7 +250,6 @@ async def escanear(ctx):
     await ctx.send("⚙️ Protocolo de escaneo manual activado. Despertando al scraper... ten paciencia, esto tomará unos minutos.")
     
     try:
-        # Envolvemos el orquestador sincrónico para no congelar el loop de Discord
         def ejecutar_scraping():
             scraper = BuscalibreScraper()
             repo = LibroRepository()
@@ -137,7 +260,6 @@ async def escanear(ctx):
                 app_orquestador.ejecutar(urls)
 
         await asyncio.to_thread(ejecutar_scraping)
-        
         await ctx.send("✅ Barrido de mercado completado. Los archivos han sido actualizados.\n"
                        "Si hubo bajones históricos de precio, deberías ver las alertas arriba. O puedes usar `!resumen`.")
             
@@ -158,66 +280,33 @@ async def saludar(ctx):
 async def ofertas(ctx):
     """Solicita a la Bibliotecaria un informe de los precios mínimos actuales"""
     try:
-        with DatabasePool.get_connection() as conn:
-            with conn.cursor() as cursor:
-                query = """
-                    WITH Minimos AS (
-                        SELECT id_libro, MIN(precio) as min_historico FROM fact_precio GROUP BY id_libro
-                    ),
-                    UltimosPrecios AS (
-                        SELECT p.id_libro, p.precio as precio_actual 
-                        FROM fact_precio p
-                        JOIN dim_fecha f ON p.id_fecha = f.id_fecha
-                        WHERE f.fecha_exacta = (SELECT MAX(fecha_exacta) FROM dim_fecha)
-                    )
-                    SELECT l.titulo, u.precio_actual
-                    FROM UltimosPrecios u
-                    JOIN Minimos m ON u.id_libro = m.id_libro
-                    JOIN dim_libro l ON u.id_libro = l.id_libro
-                    WHERE u.precio_actual <= m.min_historico;
-                """
-                cursor.execute(query)
-                resultados = cursor.fetchall()
-                
-                if not resultados:
-                    await ctx.send("He consultado el archivo. No hay fluctuaciones relevantes hoy; ningún ejemplar está en su mínimo histórico. \nPuedes volver a tus asuntos. ...Y no te frustres, los números del mercado siempre terminan bajando eventualmente.")
-                else:
-                    mensaje = (
-                        "Revisión completada. Los siguientes ejemplares han tocado su piso histórico.\n"
-                        "Toma nota rápido, por favor. Tengo otros catálogos que ordenar:\n\n"
-                    )
-                    for fila in resultados:
-                        precio_formateado = f"${int(fila[1]):,}".replace(",", ".")
-                        mensaje += f"📖 **{fila[0]}** — {precio_formateado}\n"
-                    
-                    mensaje += "\nAhí lo tienes. Si vas a comprar alguno, espero que al menos te hagas el tiempo para leerlo con calma y no lo dejes juntando polvo en la repisa."
-                    await ctx.send(mensaje)
+        resultados = await asyncio.to_thread(BotDatabaseOperations.obtener_ofertas)
+        
+        if not resultados:
+            await ctx.send("He consultado el archivo. No hay fluctuaciones relevantes hoy; ningún ejemplar está en su mínimo histórico. \nPuedes volver a tus asuntos. ...Y no te frustres, los números del mercado siempre terminan bajando eventualmente.")
+        else:
+            mensaje = (
+                "Revisión completada. Los siguientes ejemplares han tocado su piso histórico.\n"
+                "Toma nota rápido, por favor. Tengo otros catálogos que ordenar:\n\n"
+            )
+            for fila in resultados:
+                precio_formateado = f"${int(fila[1]):,}".replace(",", ".")
+                mensaje += f"📖 **{fila[0]}** — {precio_formateado}\n"
+            
+            mensaje += "\nAhí lo tienes. Si vas a comprar alguno, espero que al menos te hagas el tiempo para leerlo con calma y no lo dejes juntando polvo en la repisa."
+            await ctx.send(mensaje)
             
     except Exception as e:
         await ctx.send(f"Se ha producido un error de lectura en los registros: {str(e)}. \nCálmate, no es grave. Yo me encargaré de aislar el fallo para que los archivos no se corrompan.")
 
 @bot.command(aliases=['leído'])
 async def leido(ctx, *, texto: str):
-    if "|" in texto:
-        partes = texto.split("|", 1)
-        titulo = partes[0].strip()
-        autor = partes[1].strip()
-    else:
-        titulo = texto.strip()
-        autor = None 
+    partes = texto.split("|", 1)
+    titulo = partes[0].strip()
+    autor = partes[1].strip() if len(partes) > 1 else None 
 
     try:
-        with DatabasePool.get_connection() as conn:
-            with conn.cursor() as cursor:
-                query = """
-                    INSERT INTO fichas_lectura (titulo, autor, estado_lectura) 
-                    VALUES (%s, %s, 'leido')
-                    ON CONFLICT (titulo) 
-                    DO UPDATE SET estado_lectura = 'leido', autor = COALESCE(EXCLUDED.autor, fichas_lectura.autor), fecha_actualizacion = CURRENT_TIMESTAMP;
-                """
-                cursor.execute(query, (titulo, autor))
-                conn.commit()
-                
+        await asyncio.to_thread(BotDatabaseOperations.actualizar_ficha_lectura, titulo, autor, 'leido')
         texto_autor = f" (de {autor})" if autor else ""
         await ctx.send(f"📄 Expediente actualizado. **'{titulo}'**{texto_autor} ha sido clasificado como completado.\n"
                        f"Es un ritmo de lectura aceptable. Buen trabajo... sé que a veces cansa caleta mantener la concentración.")
@@ -226,26 +315,12 @@ async def leido(ctx, *, texto: str):
 
 @bot.command()
 async def pendiente(ctx, *, texto: str):
-    if "|" in texto:
-        partes = texto.split("|", 1)
-        titulo = partes[0].strip()
-        autor = partes[1].strip()
-    else:
-        titulo = texto.strip()
-        autor = None
+    partes = texto.split("|", 1)
+    titulo = partes[0].strip()
+    autor = partes[1].strip() if len(partes) > 1 else None
 
     try:
-        with DatabasePool.get_connection() as conn:
-            with conn.cursor() as cursor:
-                query = """
-                    INSERT INTO fichas_lectura (titulo, autor, estado_lectura) 
-                    VALUES (%s, %s, 'pendiente')
-                    ON CONFLICT (titulo) 
-                    DO UPDATE SET estado_lectura = 'pendiente', autor = COALESCE(EXCLUDED.autor, fichas_lectura.autor), fecha_actualizacion = CURRENT_TIMESTAMP;
-                """
-                cursor.execute(query, (titulo, autor))
-                conn.commit()
-                
+        await asyncio.to_thread(BotDatabaseOperations.actualizar_ficha_lectura, titulo, autor, 'pendiente')
         texto_autor = f" (de {autor})" if autor else ""
         await ctx.send(f"🖋️ Ingresado a Supabase. **'{titulo}'**{texto_autor} está ahora en tu lista de espera.\n"
                        f"Procura no acumular demasiados títulos. Yo me encargaré de vigilar que no gastes de más cuando decidas comprarlo.")
@@ -256,12 +331,7 @@ async def pendiente(ctx, *, texto: str):
 async def estante(ctx):
     """Muestra tu estantería completa leyendo desde Supabase"""
     try:
-        with DatabasePool.get_connection() as conn:
-            with conn.cursor(cursor_factory=RealDictCursor) as cursor:
-                query = "SELECT titulo, autor, estado_lectura FROM fichas_lectura ORDER BY fecha_actualizacion DESC;"
-                cursor.execute(query)
-                resultados = cursor.fetchall()
-                
+        resultados = await asyncio.to_thread(BotDatabaseOperations.obtener_estante)
         mensaje = "📋 **Reporte de Estado: Ficha de Lectura**\n\n"
         
         leidos = [f"**{f['titulo']}**" + (f" - *{f['autor']}*" if f['autor'] else "") for f in resultados if f['estado_lectura'] == 'leido']
@@ -288,20 +358,7 @@ async def estante(ctx):
 @bot.command()
 async def precio(ctx, *, nombre_libro: str):
     try:
-        with DatabasePool.get_connection() as conn:
-            with conn.cursor(cursor_factory=RealDictCursor) as cursor:
-                query = """
-                    SELECT l.titulo, f.precio, l.precio_target, 
-                           (SELECT MIN(precio) FROM fact_precio WHERE id_libro = l.id_libro) as precio_minimo
-                    FROM dim_libro l
-                    JOIN fact_precio f ON l.id_libro = f.id_libro
-                    WHERE l.titulo ILIKE %s
-                    ORDER BY f.id_fecha DESC, f.hora_monitoreo DESC
-                    LIMIT 1;
-                """
-                cursor.execute(query, (f"%{nombre_libro}%",))
-                resultado = cursor.fetchone()
-
+        resultado = await asyncio.to_thread(BotDatabaseOperations.consultar_precio, nombre_libro)
         if resultado:
             titulo = resultado['titulo']
             precio_actual = resultado['precio']
@@ -348,17 +405,7 @@ async def agregar(ctx, *, texto: str):
         return
 
     try:
-        with DatabasePool.get_connection() as conn:
-            with conn.cursor() as cursor:
-                query = """
-                    INSERT INTO dim_libro (titulo, url_buscalibre, estado)
-                    VALUES (%s, %s, 'Activo')
-                    ON CONFLICT (titulo) 
-                    DO UPDATE SET url_buscalibre = EXCLUDED.url_buscalibre;
-                """
-                cursor.execute(query, (titulo, link))
-                conn.commit()
-        
+        await asyncio.to_thread(BotDatabaseOperations.agregar_libro, titulo, link)
         await ctx.send(f"🔗 Enlace recibido y validado en la matriz central.\n"
                        f"He añadido **'{titulo}'** al catálogo de rastreo. El scraper lo revisará a medianoche.\n"
                        f"Estaré atenta a sus fluctuaciones... no te preocupes, yo me encargo de que no te estafen.")
@@ -368,12 +415,7 @@ async def agregar(ctx, *, texto: str):
 @bot.command()
 async def target(ctx, precio: int, *, nombre_libro: str):
     try:
-        with DatabasePool.get_connection() as conn:
-            with conn.cursor() as cursor:
-                query = "UPDATE dim_libro SET precio_target = %s WHERE titulo ILIKE %s;"
-                cursor.execute(query, (precio, f"%{nombre_libro}%"))
-                conn.commit()
-                rowcount = cursor.rowcount
+        rowcount = await asyncio.to_thread(BotDatabaseOperations.fijar_target, precio, nombre_libro)
         
         if rowcount > 0:
             await ctx.send(f"🎯 Parámetro establecido. He fijado una alerta estricta para **'{nombre_libro}'** a **${precio}**.\n"
@@ -395,32 +437,7 @@ async def resumen(ctx):
     await ctx.send("⚙️ Procesando solicitud... cruzando la tabla de hechos con las dimensiones. Dame un segundo.")
     
     try:
-        with DatabasePool.get_connection() as conn:
-            with conn.cursor(cursor_factory=RealDictCursor) as cursor:
-                query = """
-                    WITH PreciosActuales AS (
-                        SELECT 
-                            l.id_libro,
-                            l.titulo,
-                            f.precio AS precio_actual,
-                            RANK() OVER(PARTITION BY l.id_libro ORDER BY f.id_fecha DESC, f.hora_monitoreo DESC) as rank_fecha
-                        FROM dim_libro l
-                        JOIN fact_precio f ON l.id_libro = f.id_libro
-                    ),
-                    PreciosMinimos AS (
-                        SELECT id_libro, MIN(precio) AS precio_minimo
-                        FROM fact_precio
-                        GROUP BY id_libro
-                    )
-                    SELECT pa.titulo, pa.precio_actual, pm.precio_minimo
-                    FROM PreciosActuales pa
-                    JOIN PreciosMinimos pm ON pa.id_libro = pm.id_libro
-                    WHERE pa.rank_fecha = 1
-                    ORDER BY pa.precio_actual ASC
-                    LIMIT 3;
-                """
-                cursor.execute(query)
-                resultados = cursor.fetchall()
+        resultados = await asyncio.to_thread(BotDatabaseOperations.obtener_resumen)
         
         if not resultados:
             await ctx.send("🗂️ Los archivos están vacíos. Tu tabla de hechos no tiene registros recientes.")
@@ -447,10 +464,21 @@ async def resumen(ctx):
     except Exception as e:
         await ctx.send(f"⚠️ Ocurrió una anomalía al cruzar los expedientes: {e}")
 
+# =====================================================================
+# INICIO DEL SISTEMA (Ejecución Cooperativa)
+# =====================================================================
+async def main():
+    # Inicializar Base de Datos de manera segura
+    DatabasePool.initialize()
+    
+    # Iniciar el bot y la API de manera paralela dentro del mismo Event Loop
+    async with bot:
+        bot.loop.create_task(start_api())
+        await bot.start(TOKEN)
+
 if __name__ == "__main__":
-    # Importante asegurar que el token esté cargado
     if not TOKEN:
         print("❌ Error de sistema: No se detectó el DISCORD_TOKEN en las variables de entorno.")
     else:
-        mantener_vivo() 
-        bot.run(TOKEN)
+        # Aquí inicia la orquestación principal
+        asyncio.run(main())
