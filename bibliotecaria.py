@@ -191,30 +191,55 @@ class BotDatabaseOperations:
             
     @staticmethod
     def buscar_info_libro(titulo: str, autor: str):
-        """Consulta Google Books API para completar la ficha técnica."""
-        url = f"https://www.googleapis.com/books/v1/volumes?q=intitle:{titulo}+inauthor:{autor}&maxResults=1"
+        """Consulta Google Books API de forma segura, flexible y en español."""
+        url = "https://www.googleapis.com/books/v1/volumes"
+        
+        # Búsqueda general (mucho más efectiva que usar filtros estrictos)
+        query = f"{titulo} {autor}"
+        
+        # Usamos 'params' para que requests codifique tildes y espacios automáticamente
+        parametros = {
+            "q": query,
+            "maxResults": 1,
+            "langRestrict": "es"  # Obliga a Google a priorizar sinopsis en español
+        }
+        
         try:
-            response = requests.get(url, timeout=10)
+            # Hacemos la petición
+            response = requests.get(url, params=parametros, timeout=10)
+            response.raise_for_status() # Verifica que la conexión fue exitosa
             data = response.json()
             
+            # Si Google no devuelve resultados, salimos
             if 'items' not in data:
                 return None
             
             info = data['items'][0]['volumeInfo']
-            
-            # Cálculo estimado de palabras: promedio 250 palabras por página
             paginas = info.get('pageCount', 0)
             
+            # Mejor extracción del ISBN (Buscamos específicamente el de 13 dígitos)
+            isbn_limpio = 'N/A'
+            identificadores = info.get('industryIdentifiers', [])
+            for id_obj in identificadores:
+                if id_obj.get('type') == 'ISBN_13':
+                    isbn_limpio = id_obj.get('identifier')
+                    break
+            
+            # Si no encontró de 13, agarra el primero que haya
+            if isbn_limpio == 'N/A' and identificadores:
+                isbn_limpio = identificadores[0].get('identifier', 'N/A')
+            
             return {
-                "titulo": info.get('title'),
+                "titulo": info.get('title', titulo),
                 "editorial": info.get('publisher', 'Desconocido'),
                 "anio": str(info.get('publishedDate', '0000'))[:4],
                 "paginas": paginas,
                 "palabras": paginas * 250, # Estimación estándar
                 "resumen": info.get('description', 'Sin resumen disponible.'),
-                "isbn": info.get('industryIdentifiers', [{}])[0].get('identifier', 'N/A')
+                "isbn": isbn_limpio
             }
-        except Exception:
+        except Exception as e:
+            print(f"Error interno buscando en Google Books: {e}")
             return None
 
 # =====================================================================
