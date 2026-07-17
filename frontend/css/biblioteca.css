@@ -1,0 +1,206 @@
+/* =========================================
+   LAYOUT PRINCIPAL (Menú Lateral + Contenido)
+   ========================================= */
+.app-layout {
+    display: flex;
+    min-height: 100vh;
+    background-color: #f0f2f5;
+}
+
+/* Menú Lateral */
+.sidebar {
+    width: 260px;
+    background-color: #1a237e;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+}
+
+.sidebar-header {
+    padding: 20px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.sidebar-nav {
+    padding: 20px 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.nav-section {
+    padding: 10px 20px;
+    font-size: 12px;
+    text-transform: uppercase;
+    color: #9fa8da;
+    font-weight: bold;
+    letter-spacing: 1px;
+    margin-top: 10px;
+}
+
+.nav-link {
+    padding: 12px 20px;
+    color: #e8eaf6;
+    text-decoration: none;
+    transition: background 0.3s, padding-left 0.3s;
+}
+
+.nav-link:hover, .nav-link.active {
+    background-color: #283593;
+    border-left: 4px solid #4db6ac;
+    padding-left: 24px;
+    font-weight: bold;
+}
+
+/* Área de Contenido */
+.main-content {
+    flex: 1;
+    padding: 30px;
+    overflow-y: auto;
+}
+
+/* =========================================
+   CUADRÍCULA DEL CATÁLOGO
+   ========================================= */
+.catalogo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 25px;
+    margin-top: 20px;
+}
+
+/* =========================================
+   SISTEMA FLIP CARD 3D (Magia CSS)
+   ========================================= */
+.book-card {
+    background-color: transparent;
+    width: 100%;
+    height: 420px;
+    perspective: 1000px; /* Le da profundidad 3D al giro */
+    cursor: pointer;
+}
+
+.book-card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    text-align: left;
+    transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+    transform-style: preserve-3d;
+}
+
+/* Evento de Giro: Gira 180 grados en el eje Y al pasar el mouse */
+.book-card:hover .book-card-inner {
+    transform: rotateY(180deg);
+}
+
+/* Estilos comunes para Frente y Reverso */
+.book-card-front, .book-card-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    -webkit-backface-visibility: hidden; /* Oculta la parte de atrás de Safari */
+    backface-visibility: hidden;         /* Oculta la parte que no está de frente */
+    border-radius: 12px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+    background-color: white;
+    overflow: hidden;
+}
+
+/* =========================================
+   DISEÑO DEL FRENTE
+   ========================================= */
+.portada-placeholder {
+    height: 60%;
+    background: linear-gradient(135deg, #2b3a67, #1a237e);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 20px;
+    font-size: 20px;
+    font-weight: bold;
+    font-family: serif;
+}
+
+.book-info-front {
+    padding: 15px;
+}
+
+.book-info-front h3 {
+    margin: 0 0 5px 0;
+    font-size: 18px;
+    color: #222;
+}
+
+.book-info-front .autor {
+    color: #666;
+    font-size: 14px;
+    margin-bottom: 10px;
+}
+
+.book-badges {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 15px;
+}
+
+.badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.badge-estado.en-lectura { background-color: #e3f2fd; color: #1565c0; }
+.badge-estado.leido { background-color: #e8f5e9; color: #2e7d32; }
+.badge-estado.pendiente { background-color: #fff3cd; color: #856404; }
+
+/* =========================================
+   DISEÑO DEL REVERSO
+   ========================================= */
+.book-card-back {
+    background-color: #f8f9fa;
+    color: #333;
+    transform: rotateY(180deg); /* El reverso empieza girado */
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+.book-card-back h3 {
+    margin-top: 0;
+    color: #1a237e;
+    border-bottom: 2px solid #ccc;
+    padding-bottom: 5px;
+}
+
+.book-details-list {
+    list-style: none;
+    padding: 0;
+    margin: 10px 0;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.book-finanzas {
+    margin-top: 10px;
+    background: #e8f5e9;
+    padding: 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    color: #2e7d32;
+    border-left: 4px solid #4caf50;
+}
+
+.book-observaciones {
+    margin-top: auto;
+    font-size: 12px;
+    color: #666;
+    background: #fff;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px dashed #ccc;
+}

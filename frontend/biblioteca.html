@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Biblioteca Personal | Matriz Central</title>
+    <!-- Reutilizamos tu estilo base y agregamos el específico de la biblioteca -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/biblioteca.css">
+</head>
+<body>
+    <div class="app-layout">
+        <!-- SUBMENÚ LATERAL -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>Matriz Central</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <p class="nav-section">Módulo Principal</p>
+                <a href="index.html" class="nav-link">📊 Ofertas e Historial</a>
+                
+                <p class="nav-section">Mi Biblioteca</p>
+                <a href="biblioteca.html" class="nav-link active">📚 Catálogo</a>
+                <a href="#" class="nav-link">📈 Estadísticas</a>
+                <a href="#" class="nav-link">❤️ Wishlist</a>
+                <a href="#" class="nav-link">🏆 Logros</a>
+            </nav>
+        </aside>
+
+        <!-- CONTENIDO PRINCIPAL -->
+        <main class="main-content">
+            <header class="dashboard-header">
+                <h1>📚 Catálogo de Libros</h1>
+                <p>Tu colección personal. Pasa el ratón sobre un libro para ver sus detalles.</p>
+            </header>
+
+            <!-- CUADRÍCULA DEL CATÁLOGO -->
+            <section class="catalogo-grid" id="catalogo-container">
+                
+                <!-- EJEMPLO DE TARJETA 3D (FLIP CARD) -->
+                <div class="book-card">
+                    <div class="book-card-inner">
+                        
+                        <!-- FRENTE DE LA TARJETA -->
+                        <div class="book-card-front">
+                            <div class="portada-placeholder">
+                                <!-- Aquí irá la imagen de portada. Por ahora usamos un placeholder -->
+                                <span>El Archivo de las Tormentas</span>
+                            </div>
+                            <div class="book-info-front">
+                                <h3>El Camino de los Reyes</h3>
+                                <p class="autor">Brandon Sanderson</p>
+                                <div class="book-badges">
+                                    <span class="badge badge-estado en-lectura">En Lectura (45%)</span>
+                                    <span class="badge badge-rating">⭐⭐⭐⭐⭐</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- REVERSO DE LA TARJETA -->
+                        <div class="book-card-back">
+                            <h3>Detalles Técnicos</h3>
+                            <ul class="book-details-list">
+                                <li><strong>Género:</strong> Fantasía Épica</li>
+                                <li><strong>Editorial:</strong> Nova</li>
+                                <li><strong>Páginas:</strong> 1200</li>
+                                <li><strong>ISBN:</strong> 9788466657662</li>
+                                <li><strong>Formato:</strong> Físico Nuevo</li>
+                            </ul>
+                            
+                            <div class="book-finanzas">
+                                💰 <strong>Comprado en:</strong> Buscalibre<br>
+                                💸 <strong>Precio pagado:</strong> $24.990<br>
+                                📅 <strong>Fecha:</strong> 15-Mar-2025
+                            </div>
+
+                            <div class="book-observaciones">
+                                <em>"Primer libro del Cosmere que leo. Excelente construcción de mundo."</em>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                <!-- FIN EJEMPLO TARJETA -->
+
+            </section>
+        </main>
+    </div>
+    <script src="js/biblioteca.js"></script>
+</body>
+</html>

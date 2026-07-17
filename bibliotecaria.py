@@ -160,6 +160,34 @@ class BotDatabaseOperations:
                 cursor.execute(query)
                 return cursor.fetchall()
 
+    @staticmethod
+    def obtener_catalogo_biblioteca():
+        """Extrae todos los libros de la biblioteca personal cruzando las tablas relacionales."""
+        with DatabasePool.get_connection() as conn:
+            with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                query = """
+                    SELECT 
+                        b.titulo, 
+                        COALESCE(a.nombre, 'Autor Desconocido') as autor, 
+                        COALESCE(g.nombre, 'Sin clasificar') as genero,
+                        b.editorial,
+                        b.num_paginas,
+                        b.isbn,
+                        b.formato,
+                        b.estado_lectura,
+                        b.calificacion,
+                        b.observaciones,
+                        c.precio_pagado,
+                        c.tienda,
+                        TO_CHAR(c.fecha_compra, 'DD-Mon-YYYY') as fecha_compra
+                    FROM bib_libros b
+                    LEFT JOIN bib_autores a ON b.id_autor = a.id_autor
+                    LEFT JOIN bib_generos g ON b.id_genero = g.id_genero
+                    LEFT JOIN bib_compras c ON b.id_bib = c.id_bib
+                    ORDER BY b.fecha_agregado DESC;
+                """
+                cursor.execute(query)
+                return cursor.fetchall()
 
 # =====================================================================
 # SISTEMA DE SOPORTE VITAL Y API CENTRAL (FastAPI)
@@ -177,6 +205,15 @@ app.add_middleware(
 @app.get("/")
 def home():
     return {"status": "La Bibliotecaria está en línea y vigilando los archivos."}
+
+@app.get("/api/biblioteca/catalogo")
+def obtener_catalogo_api():
+    """Endpoint que alimenta la cuadrícula de Flip Cards del frontend"""
+    try:
+        datos = BotDatabaseOperations.obtener_catalogo_biblioteca()
+        return {"catalogo": datos}
+    except Exception as e:
+        return {"error": str(e)}
 
 @app.get("/api/historial")
 def obtener_historial():
@@ -463,6 +500,8 @@ async def resumen(ctx):
 
     except Exception as e:
         await ctx.send(f"⚠️ Ocurrió una anomalía al cruzar los expedientes: {e}")
+
+
 
 # =====================================================================
 # INICIO DEL SISTEMA (Ejecución Cooperativa)
