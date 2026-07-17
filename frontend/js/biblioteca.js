@@ -135,48 +135,64 @@ document.addEventListener("DOMContentLoaded", () => {
         };
     }
 
-    // Evento de la Bibliotecaria investigando en la API
+// Evento de la Bibliotecaria investigando directamente desde el navegador (Bypass Render)
     if (btnAutocompletar) {
         btnAutocompletar.addEventListener('click', async () => {
             const titulo = document.getElementById('form-titulo').value.trim();
             const autor = document.getElementById('form-autor').value.trim();
 
             if (!titulo || !autor) {
-                mensajeInvestigacion.style.color = "#d32f2f"; // Rojo
+                mensajeInvestigacion.style.color = "#d32f2f"; 
                 mensajeInvestigacion.innerText = "⚠️ Necesito el título y el autor para iniciar la búsqueda.";
                 return;
             }
 
-            mensajeInvestigacion.style.color = "#1565c0"; // Azul
-            mensajeInvestigacion.innerText = "🔍 Investigando en archivos mundiales... espera.";
+            mensajeInvestigacion.style.color = "#1565c0"; 
+            mensajeInvestigacion.innerText = "🔍 Interceptando señal de Google Books... espera.";
             btnAutocompletar.disabled = true;
             btnAutocompletar.style.opacity = "0.7";
 
             try {
-                // Llamamos a nuestro propio backend en Render
-                const urlBuscador = `https://bibliotecaria-bot.onrender.com/api/biblioteca/investigar?titulo=${encodeURIComponent(titulo)}&autor=${encodeURIComponent(autor)}`;
-                const response = await fetch(urlBuscador);
+                // BYPASS: Atacamos la API de Google directamente desde el navegador del usuario
+                const queryEncoded = encodeURIComponent(`${titulo} ${autor}`);
+                const urlGoogle = `https://www.googleapis.com/books/v1/volumes?q=${queryEncoded}&maxResults=1&langRestrict=es`;
+                
+                const response = await fetch(urlGoogle);
+                if (!response.ok) throw new Error("Google rechazó la conexión local.");
+                
                 const data = await response.json();
 
-                if (data.exito) {
-                    // Rellenar los inputs con la información limpia
-                    document.getElementById('form-editorial').value = data.datos.editorial || "";
-                    document.getElementById('form-anio').value = data.datos.anio || "";
-                    document.getElementById('form-paginas').value = data.datos.paginas || "";
-                    document.getElementById('form-palabras').value = data.datos.palabras || "";
-                    document.getElementById('form-isbn').value = data.datos.isbn || "";
-                    document.getElementById('form-resumen').value = data.datos.resumen || "";
+                if (data.items && data.items.length > 0) {
+                    const info = data.items[0].volumeInfo;
                     
-                    mensajeInvestigacion.style.color = "#2e7d32"; // Verde
-                    mensajeInvestigacion.innerText = "✅ Expediente completado con éxito.";
+                    // Extraer páginas
+                    const paginas = info.pageCount || "";
+                    
+                    // Extraer ISBN limpio
+                    let isbnLimpio = "";
+                    if (info.industryIdentifiers) {
+                        const isbn13 = info.industryIdentifiers.find(id => id.type === 'ISBN_13');
+                        isbnLimpio = isbn13 ? isbn13.identifier : info.industryIdentifiers[0].identifier;
+                    }
+
+                    // Rellenar el formulario
+                    document.getElementById('form-editorial').value = info.publisher || "";
+                    document.getElementById('form-anio').value = info.publishedDate ? info.publishedDate.substring(0, 4) : "";
+                    document.getElementById('form-paginas').value = paginas;
+                    document.getElementById('form-palabras').value = paginas ? paginas * 250 : "";
+                    document.getElementById('form-isbn').value = isbnLimpio;
+                    document.getElementById('form-resumen').value = info.description || "Sin resumen disponible.";
+                    
+                    mensajeInvestigacion.style.color = "#2e7d32"; 
+                    mensajeInvestigacion.innerText = "✅ Expediente extraído vía Bypass con éxito.";
                 } else {
                     mensajeInvestigacion.style.color = "#d32f2f";
-                    mensajeInvestigacion.innerText = `❌ ${data.error}`;
+                    mensajeInvestigacion.innerText = "❌ Los archivos de Google no tienen este libro.";
                 }
             } catch (error) {
-                console.error("Error en autocompletado:", error);
+                console.error("Error en Bypass:", error);
                 mensajeInvestigacion.style.color = "#d32f2f";
-                mensajeInvestigacion.innerText = "⚠️ Error de conexión con la matriz central.";
+                mensajeInvestigacion.innerText = "⚠️ Error al conectar con Google Books.";
             } finally {
                 btnAutocompletar.disabled = false;
                 btnAutocompletar.style.opacity = "1";
