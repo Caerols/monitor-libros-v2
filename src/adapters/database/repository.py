@@ -17,21 +17,24 @@ class LibroRepository:
     def _asegurar_fecha_actual(self, cursor) -> int:
         """
         Garantiza que la fecha actual exista en dim_fecha y retorna su ID.
-        Si no existe, la crea al vuelo. (Lazy Loading)
+        Si no existe, la crea al vuelo usando un Smart Key (AAAAMMDD).
         """
         hoy = date.today()
+        # Creamos un ID inteligente numérico (ej. 17 de Julio de 2026 -> 20260717)
+        id_fecha_smart = int(hoy.strftime("%Y%m%d"))
+        
         cursor.execute("SELECT id_fecha FROM dim_fecha WHERE fecha_exacta = %s;", (hoy,))
         resultado = cursor.fetchone()
         
         if resultado:
             return resultado[0]
             
-        # Si no existe, la insertamos
+        # Si no existe, la insertamos pasando explícitamente el id_fecha_smart
         query_insert_fecha = """
-            INSERT INTO dim_fecha (fecha_exacta, anio, mes, dia) 
-            VALUES (%s, %s, %s, %s) RETURNING id_fecha;
+            INSERT INTO dim_fecha (id_fecha, fecha_exacta, anio, mes, dia) 
+            VALUES (%s, %s, %s, %s, %s) RETURNING id_fecha;
         """
-        cursor.execute(query_insert_fecha, (hoy, hoy.year, hoy.month, hoy.day))
+        cursor.execute(query_insert_fecha, (id_fecha_smart, hoy, hoy.year, hoy.month, hoy.day))
         return cursor.fetchone()[0]
 
     def guardar_libros(self, libros: List[Libro]) -> None:
