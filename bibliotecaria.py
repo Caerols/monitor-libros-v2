@@ -1,6 +1,9 @@
 import os
 import discord
 import asyncio
+import json
+import urllib.request
+import urllib.parse
 from discord.ext import commands
 from dotenv import load_dotenv
 from fastapi import FastAPI
@@ -191,41 +194,28 @@ class BotDatabaseOperations:
             
     @staticmethod
     def buscar_info_libro(titulo: str, autor: str):
-        """Consulta Google Books API de forma segura, flexible y en español."""
-        url = "https://www.googleapis.com/books/v1/volumes"
-        
-        # Búsqueda general (mucho más efectiva que usar filtros estrictos)
+        """Consulta Google Books usando librerías nativas para evitar errores en Render."""
         query = f"{titulo} {autor}"
-        
-        # Usamos 'params' para que requests codifique tildes y espacios automáticamente
-        parametros = {
-            "q": query,
-            "maxResults": 1,
-            "langRestrict": "es"  # Obliga a Google a priorizar sinopsis en español
-        }
+        q_encoded = urllib.parse.quote(query) # Codifica los espacios y tildes perfecto
+        url = f"https://www.googleapis.com/books/v1/volumes?q={q_encoded}&maxResults=1&langRestrict=es"
         
         try:
-            # Hacemos la petición
-            response = requests.get(url, params=parametros, timeout=10)
-            response.raise_for_status() # Verifica que la conexión fue exitosa
-            data = response.json()
+            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+            with urllib.request.urlopen(req, timeout=10) as response:
+                data = json.loads(response.read().decode('utf-8'))
             
-            # Si Google no devuelve resultados, salimos
             if 'items' not in data:
-                return None
+                return {"error": "Google Books no tiene registros para este libro."}
             
             info = data['items'][0]['volumeInfo']
             paginas = info.get('pageCount', 0)
             
-            # Mejor extracción del ISBN (Buscamos específicamente el de 13 dígitos)
             isbn_limpio = 'N/A'
             identificadores = info.get('industryIdentifiers', [])
             for id_obj in identificadores:
                 if id_obj.get('type') == 'ISBN_13':
                     isbn_limpio = id_obj.get('identifier')
                     break
-            
-            # Si no encontró de 13, agarra el primero que haya
             if isbn_limpio == 'N/A' and identificadores:
                 isbn_limpio = identificadores[0].get('identifier', 'N/A')
             
@@ -234,13 +224,13 @@ class BotDatabaseOperations:
                 "editorial": info.get('publisher', 'Desconocido'),
                 "anio": str(info.get('publishedDate', '0000'))[:4],
                 "paginas": paginas,
-                "palabras": paginas * 250, # Estimación estándar
+                "palabras": paginas * 250,
                 "resumen": info.get('description', 'Sin resumen disponible.'),
                 "isbn": isbn_limpio
             }
         except Exception as e:
-            print(f"Error interno buscando en Google Books: {e}")
-            return None
+            # Ahora, si falla, capturamos el error exacto para verlo en el HTML
+            return {"error": f"Fallo interno en servidor Python: {str(e)}"}
 
 # =====================================================================
 # SISTEMA DE SOPORTE VITAL Y API CENTRAL (FastAPI)
@@ -270,15 +260,17 @@ def obtener_catalogo_api():
 
 @app.get("/api/biblioteca/investigar")
 def investigar_libro_api(titulo: str, autor: str):
-    """Endpoint para que el frontend consulte la API de Google Books"""
+    """Endpoint que envía la info, o el error REAL al frontend"""
     try:
         datos = BotDatabaseOperations.buscar_info_libro(titulo, autor)
-        if datos:
-            return {"exito": True, "datos": datos}
-        else:
-            return {"exito": False, "error": "No encontré registros en los archivos mundiales para ese título y autor."}
+        
+        # Revisamos si la función nos devolvió un mensaje de error
+        if "error" in datos:
+            return {"exito": False, "error": datos["error"]}
+            
+        return {"exito": True, "datos": datos}
     except Exception as e:
-        return {"exito": False, "error": str(e)}
+        return {"exito": False, "error": f"Error fatal en endpoint: {str(e)}"}
 
 @app.get("/api/historial")
 def obtener_historial():
