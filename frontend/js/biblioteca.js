@@ -60,15 +60,43 @@ document.addEventListener("DOMContentLoaded", () => {
                 const estrellas = generarEstrellas(libro.calificacion);
                 const observaciones = libro.observaciones ? `<em>"${libro.observaciones}"</em>` : "<em>Sin observaciones.</em>";
 
+                // =========================================================
+                // MAGIA DE LAS PORTADAS (OpenLibrary API)
+                // =========================================================
+                // Limpiamos el ISBN de guiones o espacios
+                const isbnLimpio = libro.isbn ? String(libro.isbn).replace(/[^0-9X]/gi, '') : '';
+                
+                let portadaHTML = `
+                    <div class="portada-placeholder">
+                        <span>${libro.titulo}</span>
+                    </div>`;
+                
+                if (isbnLimpio) {
+                    // default=false obliga a la API a dar error si no hay imagen, activando nuestro onerror
+                    const urlImagen = `https://covers.openlibrary.org/b/isbn/${isbnLimpio}-L.jpg?default=false`;
+                    portadaHTML = `
+                        <div class="portada-placeholder" style="position: relative; overflow: hidden; padding: 0;">
+                            <!-- Capa 1: Texto de respaldo (siempre al fondo) -->
+                            <div style="position: absolute; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; padding: 15px; box-sizing: border-box; text-align: center;">
+                                <span>${libro.titulo}</span>
+                            </div>
+                            <!-- Capa 2: La imagen real (si falla, desaparece y revela el texto) -->
+                            <img src="${urlImagen}" 
+                                 alt="Portada de ${libro.titulo}"
+                                 style="width: 100%; height: 100%; object-fit: cover; position: relative; z-index: 10;"
+                                 onerror="this.style.display='none';">
+                        </div>
+                    `;
+                }
+                // =========================================================
+
                 const tarjetaHTML = `
                     <div class="book-card">
                         <div class="book-card-inner">
                             
                             <!-- FRENTE -->
                             <div class="book-card-front">
-                                <div class="portada-placeholder">
-                                    <span>${libro.titulo}</span>
-                                </div>
+                                ${portadaHTML}
                                 <div class="book-info-front">
                                     <h3>${libro.titulo}</h3>
                                     <p class="autor">${libro.autor}</p>
@@ -79,7 +107,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                 </div>
                             </div>
 
-                            <!-- REVERSO -->
+                           <!-- REVERSO -->
                             <div class="book-card-back" style="display: flex; flex-direction: column; height: 100%; max-height: 100%; box-sizing: border-box; overflow: hidden; padding-bottom: 20px;">
                                 <h3 style="flex-shrink: 0;">Archivo Literario</h3>
                                 <ul class="book-details-list" style="flex-shrink: 0;">
@@ -90,13 +118,13 @@ document.addEventListener("DOMContentLoaded", () => {
                                     <li><strong>Palabras:</strong> ${libro.palabras || Math.round((libro.num_paginas || 0) * 250)}</li>
                                 </ul>
                                 
-                                <!-- Caja de texto con Scroll Inteligente (El truco está en min-height: 0 y flex: 1) -->
+                                <!-- Caja de texto con Scroll Inteligente -->
                                 <div class="book-observaciones" style="flex: 1 1 auto; overflow-y: auto; min-height: 0; margin-top: 10px; border-top: 1px dashed #ccc; padding-top: 10px; margin-bottom: 15px; padding-right: 5px;">
                                     <strong>Contexto / Epílogo:</strong><br>
                                     ${observaciones}
                                 </div>
 
-                                <!-- Contenedor de Botones (Protegidos para que nunca se encojan) -->
+                                <!-- Contenedor de Botones -->
                                 <div style="flex-shrink: 0; margin-top: auto;">
                                     <button class="btn-editar" onclick="prepararEdicion(${libro.id})" style="width: 100%; padding: 8px; background-color: #ff9800; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; margin-bottom: 8px;">
                                         ✏️ Editar Expediente
@@ -106,6 +134,9 @@ document.addEventListener("DOMContentLoaded", () => {
                                     </button>
                                 </div>
                             </div>
+
+                        </div>
+                    </div>
                 `;
                 contenedorCatalogo.innerHTML += tarjetaHTML;
             });
