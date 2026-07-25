@@ -190,9 +190,10 @@ document.addEventListener("DOMContentLoaded", () => {
                     mensajeInvestigacion.innerText = "❌ Los archivos de Google no tienen este libro.";
                 }
             } catch (error) {
-                console.error("Error en Bypass:", error);
+                console.error("Error detallado en Bypass:", error);
                 mensajeInvestigacion.style.color = "#d32f2f";
-                mensajeInvestigacion.innerText = "⚠️ Error al conectar con Google Books.";
+                // Interpolamos el error real para verlo en la interfaz
+                mensajeInvestigacion.innerText = `⚠️ Error: ${error.message}`;
             } finally {
                 btnAutocompletar.disabled = false;
                 btnAutocompletar.style.opacity = "1";
