@@ -230,16 +230,16 @@ class BotDatabaseOperations:
         with DatabasePool.get_connection() as conn:
             with conn.cursor() as cur:
                 if libro.id:
-                    # MODO EDICIÓN: Actualizamos el registro existente
+                   # MODO EDICIÓN: Actualizamos el registro existente
                     update_sql = """
                     UPDATE biblioteca_personal 
                     SET titulo=%s, autor=%s, genero=%s, anio_publicacion=%s, editorial=%s, 
-                        num_paginas=%s, palabras=%s, isbn=%s, observaciones=%s
+                        num_paginas=%s, palabras=%s, isbn=%s, observaciones=%s, estado_lectura=%s, calificacion=%s
                     WHERE id=%s
                     """
                     cur.execute(update_sql, (libro.titulo, libro.autor, libro.genero, libro.anio_publicacion, 
                                              libro.editorial, libro.num_paginas, libro.palabras, libro.isbn, 
-                                             libro.observaciones, libro.id))
+                                             libro.observaciones, libro.estado_lectura, libro.calificacion, libro.id))
                 else:
                     # MODO NUEVO: Bloqueamos duplicados por Título y Autor
                     cur.execute("SELECT id FROM biblioteca_personal WHERE titulo ILIKE %s AND autor ILIKE %s", (libro.titulo, libro.autor))
