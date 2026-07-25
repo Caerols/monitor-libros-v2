@@ -12,11 +12,13 @@ body {
     background-color: #f0f2f5;
     color: #333;
     padding: 2rem; 
+    overflow-x: hidden; /* Evita cualquier scroll horizontal accidental */
 }
 
 .dashboard-container {
     max-width: 1200px;
     margin: 0 auto;
+    width: 100%;
 }
 
 /* =====================================================================
@@ -70,6 +72,7 @@ header p {
     margin-bottom: 1.5rem;
     text-align: center;
     font-weight: 500;
+    width: 100%;
 }
 .alerta.info { background-color: #e3f2fd; color: #1565c0; border: 1px solid #90caf9; }
 .alerta.warning { background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
@@ -111,6 +114,7 @@ canvas {
     flex-direction: column;
     justify-content: center;
     transition: transform 0.2s;
+    width: 100%;
 }
 
 .kpi-card:hover {
@@ -156,39 +160,18 @@ canvas {
 .tendencia-baja { color: #28a745 !important; font-weight: bold; font-size: 26px; margin: 0; }
 .tendencia-alta { color: #dc3545 !important; font-weight: bold; font-size: 26px; margin: 0; }
 
-/* =====================================================================
-   5. MODO CELULAR COMPACTO (Para KPIs)
-   ===================================================================== */
-@media (max-width: 600px) {
-    #kpi-container, .kpi-grid {
-        grid-template-columns: 1fr;
-        gap: 10px !important;
-    }
-    .kpi-card {
-        padding: 12px 10px;
-        border-radius: 8px;
-    }
-    .kpi-card h3 {
-        font-size: 13px;
-        margin-bottom: 5px;
-    }
-    .tendencia-baja, .tendencia-alta, .kpi-card p, .kpi-card .precio {
-        font-size: 20px !important;
-    }
-    .kpi-card div, .kpi-card .minimo {
-        font-size: 11px !important; 
-    }
-}
 
 /* =====================================================================
-   6. MODO RESPONSIVO GENERAL Y MENÚ HAMBURGUESA (Tablets y Smartphones)
+   5. MODO RESPONSIVO ABSOLUTO (Tablets y Smartphones)
    ===================================================================== */
 @media screen and (max-width: 768px) {
-    /* Forzar limpieza de márgenes y prevenir barra de scroll blanca */
+    /* Forzar limpieza de márgenes y prevenir barra de scroll horizontal */
     body, html {
         padding: 0 !important;
         margin: 0 !important;
         overflow-x: hidden !important;
+        width: 100vw !important;
+        max-width: 100vw !important;
     }
 
     .app-layout {
@@ -197,7 +180,7 @@ canvas {
         width: 100% !important;
     }
 
-    /* Forzar la barra azul a cubrir el 100% de la pantalla */
+    /* BARRA SUPERIOR */
     .sidebar {
         width: 100% !important;
         max-width: 100% !important;
@@ -218,12 +201,12 @@ canvas {
         background-color: #1a237e !important;
     }
 
-    /* Mostrar el botón hamburguesa */
+    /* Mostrar botón hamburguesa */
     .btn-menu-mobile {
         display: block !important;
     }
 
-    /* Ocultar menú por defecto con fuerza bruta */
+    /* MENÚ DESPLEGABLE */
     .sidebar-nav {
         display: none !important; 
         flex-direction: column !important;
@@ -233,15 +216,12 @@ canvas {
         box-sizing: border-box !important;
     }
 
-    /* Mostrar menú al apretar el botón */
     .sidebar-nav.show-menu {
         display: flex !important;
         animation: fadeIn 0.3s ease-in-out;
     }
 
-    .nav-section {
-        display: none !important;
-    }
+    .nav-section { display: none !important; }
 
     .sidebar-nav .nav-link {
         border-left: none !important;
@@ -255,24 +235,53 @@ canvas {
     }
 
     .sidebar-nav .nav-link.active {
-        border-left: none !important;
         background-color: rgba(26, 188, 156, 0.2) !important; 
     }
 
+    /* CONTENIDO PRINCIPAL (DASHBOARD) */
     .main-content {
         width: 100% !important;
+        max-width: 100vw !important;
         padding: 15px 10px !important;
         box-sizing: border-box !important;
         overflow-x: hidden !important;
     }
 
-    .chart-container, .dashboard-card, .formulario-grid, .chart-box {
+    /* Forzamos a todos los componentes a respetar el ancho de pantalla */
+    .dashboard-container, 
+    .chart-container, 
+    .dashboard-card, 
+    .formulario-grid, 
+    .chart-box, 
+    .alerta, 
+    .panel-control {
         width: 100% !important;
         max-width: 100% !important;
         box-sizing: border-box !important;
         margin-left: 0 !important;
         margin-right: 0 !important;
     }
+
+    /* KPIS EN 1 SOLA COLUMNA */
+    #kpi-container, .kpi-grid {
+        grid-template-columns: 1fr !important;
+        gap: 10px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    .kpi-card {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        padding: 15px 10px !important;
+        border-radius: 8px !important;
+    }
+
+    /* Textos del KPI responsivos */
+    .kpi-card h3 { font-size: 13px !important; margin-bottom: 5px !important; }
+    .tendencia-baja, .tendencia-alta, .kpi-card p, .kpi-card .precio { font-size: 20px !important; }
+    .kpi-card div, .kpi-card .minimo { font-size: 11px !important; }
 
     .btn-primario {
         width: 100% !important;
