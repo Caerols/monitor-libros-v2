@@ -282,7 +282,7 @@ async def start_api():
     await server.serve()
 
 # =====================================================================
-# CONFIGURACIÓN DEL BOT DE DISCORD
+# CONFIGURACIÓN DEL BOT DE DISCORD (Personalidad Restaurada)
 # =====================================================================
 intents = discord.Intents.default()
 intents.message_content = True
@@ -290,77 +290,84 @@ bot = commands.Bot(command_prefix='!', intents=intents, help_command=None)
 
 @bot.event
 async def on_ready():
-    print(f'❄️ {bot.user.name} ha iniciado el sistema. Archivos en orden.')
+    print(f'❄️ {bot.user.name} conectada a la Matriz. Acomodándose los lentes y limpiando el polvo de los archivos.')
 
 @bot.command()
 async def ayuda(ctx):
     mensaje = (
         "📜 **Manual de Usuario del Archivo** 📜\n"
-        "Soy la encargada de tu catálogo. Por favor, revisa estas directrices:\n\n"
+        "Soy la encargada de tu catálogo. Por favor, revisa estas directrices y mantén los formatos correctos para no desordenar la base de datos:\n\n"
         "**📚 Gestión de Lectura:**\n"
         "🔹 `!estante` - Muestra tu ficha con los libros leídos y pendientes.\n"
         "🔹 `!leido [título] | [autor]` - Registra un libro terminado (el autor es opcional).\n"
-        "🔹 `!pendiente [título] | [autor]` - Añade un libro a tu lista de espera.\n"
-        "🔹 `!terminar [título]` - Mueve un título de 'pendientes' a 'leídos'.\n\n"
+        "🔹 `!pendiente [título] | [autor]` - Añade un libro a tu lista de espera.\n\n"
         "**⚙️ Monitoreo de Mercado:**\n"
         "🔹 `!lista [link]` - Agrega una nueva lista compartida al escáner central.\n"
         "🔹 `!agregar [link] | [título]` - Ingresa un enlace individual y su título.\n"
         "🔹 `!target [precio] [título]` - Fija una alerta de presupuesto estricta.\n"
-        "🔹 `!precio [título]` - Activa mi radar de precios.\n"
+        "🔹 `!precio [título]` - Activa mi radar de precios en la matriz.\n"
         "🔹 `!resumen` - Muestra el top 3 de mejores ofertas del día.\n"
         "🔹 `!ofertas` - Consulta qué ejemplares han tocado su mínimo histórico.\n\n"
         "**🛠️ Sistema:**\n"
         "🔹 `!escanear` - Fuerza al scraper a realizar un barrido inmediato.\n"
-        "🔹 `!ping` - Verifica latencia."
+        "🔹 `!ping` - Verifica si estoy en línea.\n\n"
+        "*Intenta memorizar los comandos... aunque si los olvidas, supongo que puedes volver a preguntarme. Solo trata de no consultar a deshora, los sistemas también necesitan reposo.*"
     )
     await ctx.send(mensaje)
 
 @bot.command()
 async def lista(ctx, link: str):
     if "buscalibre" not in link.lower():
-        await ctx.send("❌ Ese no parece un enlace válido de Buscalibre.")
+        await ctx.send("❌ Ese no parece un enlace válido. No indexo basura en los archivos.")
         return
     try:
         await asyncio.to_thread(BotDatabaseOperations.agregar_lista, link)
-        await ctx.send("🔗 Lista compartida añadida con éxito.")
+        await ctx.send("🔗 Lista compartida añadida con éxito. El scraper la revisará en su próxima ronda nocturna.")
     except Exception as e:
-        await ctx.send(f"⚠️ Error: {e}")
+        await ctx.send(f"⚠️ Error al archivar: {e}")
 
 @bot.command()
 async def escanear(ctx):
-    await ctx.send("⚙️ Protocolo de escaneo manual activado. Despertando al scraper...")
+    await ctx.send("⚙️ Protocolo de escaneo manual activado. Despertando al scraper... ten paciencia, esto tomará unos minutos.")
     try:
         def ejecutar_scraping():
             repo = LibroRepository()
             urls = repo.obtener_listas_activas()
             if urls:
-                # Instanciación Lazy para que el GC (Garbage Collector) las destruya al terminar
                 app_orquestador = GeneradorAlertasBuscalibre(BuscalibreScraper(), repo, DiscordNotifier())
                 app_orquestador.ejecutar(urls)
 
         await asyncio.to_thread(ejecutar_scraping)
-        await ctx.send("✅ Barrido de mercado completado.")
+        await ctx.send("✅ Barrido de mercado completado. Los archivos han sido actualizados.\n"
+                       "Si hubo bajones históricos de precio, deberías ver las alertas arriba. O puedes usar `!resumen`.")
     except Exception as e:
-        await ctx.send(f"⚠️ El scraper falló. Código de error: {str(e)}")
+        await ctx.send(f"⚠️ El scraper encontró resistencia y falló en su tarea. Código de error: {str(e)}")
 
 @bot.command()
 async def saludar(ctx):
-    await ctx.send("Saludos. Soy la encargada del archivo. Mantengamos las interacciones eficientes. 👓")
+    mensaje = (
+        "Saludos, Brian. Soy la encargada del archivo y la gestión de tu catálogo. 👓\n"
+        "Mantengamos las interacciones breves y eficientes, por favor...\n"
+        "Aunque si necesitas ayuda, aquí estoy para apañar. Asegúrate de tener buena luz si vas a leer hasta tarde."
+    )
+    await ctx.send(mensaje)
 
 @bot.command()
 async def ofertas(ctx):
     try:
         resultados = await asyncio.to_thread(BotDatabaseOperations.obtener_ofertas)
         if not resultados:
-            await ctx.send("No hay fluctuaciones relevantes hoy; ningún ejemplar está en su mínimo histórico.")
+            await ctx.send("He consultado el archivo. No hay fluctuaciones relevantes hoy; ningún ejemplar está en su mínimo histórico.\n"
+                           "Puedes volver a tus asuntos. ...Y no te frustres, los números del mercado siempre terminan bajando eventualmente.")
         else:
-            mensaje = "Revisión completada. Los siguientes ejemplares han tocado su piso histórico:\n\n"
+            mensaje = "Revisión completada. Los siguientes ejemplares han tocado su piso histórico. Toma nota rápido:\n\n"
             for fila in resultados:
                 precio_formateado = f"${int(fila[1]):,}".replace(",", ".")
                 mensaje += f"📖 **{fila[0]}** — {precio_formateado}\n"
+            mensaje += "\nAhí lo tienes. Si vas a comprar alguno, pucha, espero que al menos te hagas el tiempo para leerlo con calma y no lo dejes juntando polvo en la repisa."
             await ctx.send(mensaje)
     except Exception as e:
-        await ctx.send(f"Se ha producido un error de lectura: {str(e)}.")
+        await ctx.send(f"Se ha producido un error de lectura: {str(e)}.\nCálmate, no es grave. Yo me encargaré de aislar el fallo.")
 
 @bot.command(aliases=['leído'])
 async def leido(ctx, *, texto: str):
@@ -370,9 +377,10 @@ async def leido(ctx, *, texto: str):
     try:
         await asyncio.to_thread(BotDatabaseOperations.actualizar_ficha_lectura, titulo, autor, 'leido')
         texto_autor = f" (de {autor})" if autor else ""
-        await ctx.send(f"📄 Expediente actualizado. **'{titulo}'**{texto_autor} ha sido clasificado como completado.")
+        await ctx.send(f"📄 Expediente actualizado. **'{titulo}'**{texto_autor} ha sido clasificado como completado.\n"
+                       "Buen trabajo... sé que a veces cansa caleta mantener la concentración, pero es un ritmo de lectura aceptable.")
     except Exception as e:
-        await ctx.send(f"⚠️ Ocurrió una anomalía: {e}")
+        await ctx.send(f"⚠️ Ocurrió una anomalía al registrar: {e}")
 
 @bot.command()
 async def pendiente(ctx, *, texto: str):
@@ -382,7 +390,8 @@ async def pendiente(ctx, *, texto: str):
     try:
         await asyncio.to_thread(BotDatabaseOperations.actualizar_ficha_lectura, titulo, autor, 'pendiente')
         texto_autor = f" (de {autor})" if autor else ""
-        await ctx.send(f"🖋️ **'{titulo}'**{texto_autor} está ahora en tu lista de espera.")
+        await ctx.send(f"🖋️ **'{titulo}'**{texto_autor} está ahora en tu lista de espera.\n"
+                       "Procura no acumular demasiados títulos. Yo me encargaré de vigilar que no gastes plata de más cuando decidas comprarlo.")
     except Exception as e:
         await ctx.send(f"⚠️ Anomalía en el registro: {e}")
 
@@ -395,9 +404,9 @@ async def estante(ctx):
         leidos = [f"  - **{f['titulo']}**" + (f" - *{f['autor']}*" if f['autor'] else "") for f in resultados if f['estado_lectura'] == 'leido']
         pendientes = [f"  - **{f['titulo']}**" + (f" - *{f['autor']}*" if f['autor'] else "") for f in resultados if f['estado_lectura'] == 'pendiente']
 
-        mensaje += "\n".join(leidos) if leidos else "  *Registro vacío.*"
+        mensaje += "\n".join(leidos) if leidos else "  *Registro vacío. Deberías empezar a leer algo.*"
         mensaje += "\n\n⏳ **Material Pendiente:**\n"
-        mensaje += "\n".join(pendientes) if pendientes else "  *No hay elementos en espera.*"
+        mensaje += "\n".join(pendientes) if pendientes else "  *No hay elementos en espera. Orden perfecto.*"
         
         await ctx.send(mensaje)
     except Exception as e:
@@ -411,38 +420,38 @@ async def precio(ctx, *, nombre_libro: str):
             titulo, precio_actual = resultado['titulo'], resultado['precio']
             target, minimo = resultado['precio_target'], resultado['precio_minimo']
             
-            mensaje = f"📊 **Consulta de Archivo:**\nEl último valor para **'{titulo}'** es **${precio_actual}**.\n📉 *Mínimo histórico: ${minimo}*\n"
+            mensaje = f"📊 **Consulta de Archivo:**\nEl último valor para **'{titulo}'** es de **${precio_actual}**.\n📉 *Mínimo histórico detectado: ${minimo}*\n"
             if target:
                 if precio_actual <= target:
-                    mensaje += f"\n🎯 ¡Atención! Precio bajo presupuesto (${target}). Autorizo la compra."
+                    mensaje += f"\n🎯 ¡Atención! El precio actual está por debajo de tu presupuesto estricto (${target}). Autorizo la compra."
                 else:
-                    mensaje += f"\n⏳ El valor supera tu presupuesto de ${target}. Te aconsejo esperar."
+                    mensaje += f"\n⏳ El valor aún supera tu presupuesto de ${target}. Te aconsejo esperar a que baje."
             await ctx.send(mensaje)
         else:
-            await ctx.send(f"⚠️ No encontré registros recientes para **'{nombre_libro}'**.")
+            await ctx.send(f"⚠️ Búsqueda fallida. No encontré registros para **'{nombre_libro}'**.\nAsegúrate de haberlo agregado al catálogo primero.")
     except Exception as e:
-        await ctx.send(f"⚠️ Anomalía al consultar: {e}")
+        await ctx.send(f"⚠️ Anomalía al consultar expedientes: {e}")
 
 @bot.command()
 async def ping(ctx):
-    await ctx.send(f"🏓 Pong. Latencia: {round(bot.latency * 1000)}ms.")
+    await ctx.send(f"🏓 Pong. Conexión estable. Latencia: {round(bot.latency * 1000)}ms.\nEstoy en línea y monitoreando el archivo. Todo en orden.")
 
 @bot.command()
 async def agregar(ctx, *, texto: str):
     if "|" not in texto:
-        await ctx.send("⚠️ Formato: `!agregar https://www.buscalibre.cl/... | 1984`")
+        await ctx.send("⚠️ Error de formato. Ejemplo: `!agregar https://www.buscalibre.cl/... | 1984`")
         return
         
     partes = texto.split("|", 1)
     link, titulo = partes[0].strip(), partes[1].strip()
 
     if "buscalibre" not in link.lower():
-        await ctx.send("❌ Ese enlace no pertenece al catálogo oficial.")
+        await ctx.send("❌ Ese enlace no pertenece al catálogo oficial que monitoreo. No indexo basura.")
         return
 
     try:
         await asyncio.to_thread(BotDatabaseOperations.agregar_libro, titulo, link)
-        await ctx.send(f"🔗 **'{titulo}'** añadido al catálogo de rastreo.")
+        await ctx.send(f"🔗 Enlace validado. He añadido **'{titulo}'** al catálogo.\nEstaré atenta a sus fluctuaciones... tranquila, yo me encargo de que no te estafen.")
     except Exception as e:
         await ctx.send(f"⚠️ Anomalía en el guardado: {e}")
 
@@ -451,32 +460,34 @@ async def target(ctx, precio: int, *, nombre_libro: str):
     try:
         rowcount = await asyncio.to_thread(BotDatabaseOperations.fijar_target, precio, nombre_libro)
         if rowcount > 0:
-            await ctx.send(f"🎯 Alerta estricta para **'{nombre_libro}'** fijada a **${precio}**.")
+            await ctx.send(f"🎯 Parámetro establecido. Alerta estricta para **'{nombre_libro}'** fijada a **${precio}**.\nSolo te notificaré si cae por debajo de esa cifra. Puedes descansar, yo mantendré la vigilancia por ti.")
         else:
-            await ctx.send(f"⚠️ No encontré **'{nombre_libro}'** en mi registro. Agrégalo con `!agregar`.")
+            await ctx.send(f"⚠️ Revisión fallida. No encontré **'{nombre_libro}'** en mi registro. Agrégalo con `!agregar` primero.")
     except Exception as e:
         await ctx.send(f"⚠️ Error de sistema: {e}")
 
 @target.error
 async def target_error(ctx, error):
     if isinstance(error, (commands.BadArgument, commands.MissingRequiredArgument)):
-        await ctx.send("⚠️ Sintaxis incorrecta. Ejemplo: `!target 20000 1984`.")
+        await ctx.send("⚠️ Error de sintaxis. Necesito el número primero. Ejemplo: `!target 20000 1984`.")
 
 @bot.command()
 async def resumen(ctx):
+    await ctx.send("⚙️ Procesando solicitud... cruzando datos en la matriz. Dame un segundo.")
     try:
         resultados = await asyncio.to_thread(BotDatabaseOperations.obtener_resumen)
         if not resultados:
-            await ctx.send("🗂️ Tu tabla de hechos no tiene registros recientes.")
+            await ctx.send("🗂️ Los archivos están vacíos. Tu tabla de hechos no tiene registros recientes.")
             return
 
-        mensaje = "📊 **Top 3 Libros Más Baratos**\n\n"
+        mensaje = "📊 **Reporte de Mercado: Top 3 Libros Más Baratos**\n\n"
         medallas = ["🥇", "🥈", "🥉"]
         
         for i, fila in enumerate(resultados):
-            analisis = "¡Mínimo Histórico! Momento óptimo para adquirirlo." if fila['precio_actual'] <= fila['precio_minimo'] else f"El mínimo registrado es ${fila['precio_minimo']}."
+            analisis = "¡Mínimo Histórico! Es el momento óptimo para adquirirlo." if fila['precio_actual'] <= fila['precio_minimo'] else f"El mínimo registrado es ${fila['precio_minimo']}."
             mensaje += f"{medallas[i]} **{fila['titulo']}** - **${fila['precio_actual']}**\n  └ *{analisis}*\n\n"
             
+        mensaje += "*Nota: Usa esta información sabiamente; no me gusta verte gastar plata de más en cosas que puedes conseguir baratas.*"
         await ctx.send(mensaje)
     except Exception as e:
         await ctx.send(f"⚠️ Anomalía al cruzar expedientes: {e}")
@@ -485,12 +496,9 @@ async def resumen(ctx):
 # INICIO DEL SISTEMA (Ejecución Cooperativa Optimizada)
 # =====================================================================
 async def main():
-    # Inicializar Base de Datos de manera segura
     DatabasePool.initialize()
-    # Ejecutamos los DDL pesados 1 sola vez durante el cold start (Ahorro crítico de CPU)
     BotDatabaseOperations.inicializar_tablas()
     
-    # Iniciar bot y API
     async with bot:
         bot.loop.create_task(start_api())
         await bot.start(TOKEN)
