@@ -3,6 +3,42 @@
 // =====================================================================
 window.catalogoGlobal = []; 
 
+window.buscarPortadaAlternativa = async function(imgElement, isbn, titulo, autor) {
+    // 1. Apagamos el onerror para evitar un loop infinito si Google también falla
+    imgElement.onerror = function() {
+        this.style.display = 'none'; // Si falla todo, mostramos fondo azul
+    };
+
+    try {
+        // Intento 1: Buscar en Google Books por ISBN
+        let response = await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`);
+        let data = await response.json();
+
+        if (data.items && data.items.length > 0 && data.items[0].volumeInfo.imageLinks) {
+            // Google devuelve HTTP, forzamos HTTPS
+            imgElement.src = data.items[0].volumeInfo.imageLinks.thumbnail.replace('http:', 'https:');
+            return;
+        }
+
+        // Intento 2: Buscar en Google Books por Título y Autor (Útil para ediciones raras)
+        const query = encodeURIComponent(`${titulo} ${autor}`);
+        response = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${query}&maxResults=1`);
+        data = await response.json();
+
+        if (data.items && data.items.length > 0 && data.items[0].volumeInfo.imageLinks) {
+            imgElement.src = data.items[0].volumeInfo.imageLinks.thumbnail.replace('http:', 'https:');
+            return;
+        }
+
+        // Si Google Books tampoco tiene NADA, ocultamos la imagen
+        imgElement.style.display = 'none';
+
+    } catch (error) {
+        console.error("Error buscando portada de rescate:", error);
+        imgElement.style.display = 'none';
+    }
+};
+
 document.addEventListener("DOMContentLoaded", () => {
     // =====================================================================
     // 1. MOTOR DE RENDERIZADO DEL CATÁLOGO (FLIP CARDS)
@@ -61,9 +97,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 const observaciones = libro.observaciones ? `<em>"${libro.observaciones}"</em>` : "<em>Sin observaciones.</em>";
 
                 // =========================================================
-                // MAGIA DE LAS PORTADAS (OpenLibrary API)
+                // MAGIA DE LAS PORTADAS (OpenLibrary -> Google Books Fallback)
                 // =========================================================
-                // Limpiamos el ISBN de guiones o espacios
                 const isbnLimpio = libro.isbn ? String(libro.isbn).replace(/[^0-9X]/gi, '') : '';
                 
                 let portadaHTML = `
@@ -72,19 +107,22 @@ document.addEventListener("DOMContentLoaded", () => {
                     </div>`;
                 
                 if (isbnLimpio) {
-                    // default=false obliga a la API a dar error si no hay imagen, activando nuestro onerror
                     const urlImagen = `https://covers.openlibrary.org/b/isbn/${isbnLimpio}-L.jpg?default=false`;
+                    // Escapamos comillas simples en títulos/autores para no romper el HTML
+                    const tituloEscapado = libro.titulo.replace(/'/g, "\\'");
+                    const autorEscapado = libro.autor.replace(/'/g, "\\'");
+                    
                     portadaHTML = `
                         <div class="portada-placeholder" style="position: relative; overflow: hidden; padding: 0;">
                             <!-- Capa 1: Texto de respaldo (siempre al fondo) -->
                             <div style="position: absolute; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; padding: 15px; box-sizing: border-box; text-align: center;">
                                 <span>${libro.titulo}</span>
                             </div>
-                            <!-- Capa 2: La imagen real (si falla, desaparece y revela el texto) -->
+                            <!-- Capa 2: La imagen real. Cambio clave: object-fit: contain y background blanco -->
                             <img src="${urlImagen}" 
                                  alt="Portada de ${libro.titulo}"
-                                 style="width: 100%; height: 100%; object-fit: cover; position: relative; z-index: 10;"
-                                 onerror="this.style.display='none';">
+                                 style="width: 100%; height: 100%; object-fit: contain; position: relative; z-index: 10; background-color: #ffffff;"
+                                 onerror="buscarPortadaAlternativa(this, '${isbnLimpio}', '${tituloEscapado}', '${autorEscapado}')">
                         </div>
                     `;
                 }
