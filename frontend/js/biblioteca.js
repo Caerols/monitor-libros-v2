@@ -226,7 +226,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 palabras: document.getElementById('form-palabras').value ? parseInt(document.getElementById('form-palabras').value) : 0,
                 observaciones: document.getElementById('form-resumen').value.trim(),
                 estado_lectura: document.getElementById('form-estado').value, 
-                calificacion: 0
+                calificacion: parseInt(document.getElementById('form-calificacion').value) || 0
             };
 
             if (!libroData.titulo || !libroData.autor) {
@@ -287,6 +287,7 @@ window.prepararEdicion = function(id) {
     document.getElementById('form-palabras').value = libro.palabras || '';
     document.getElementById('form-isbn').value = libro.isbn || '';
     document.getElementById('form-resumen').value = libro.observaciones || '';
+    document.getElementById('form-calificacion').value = libro.calificacion || 0;
     document.getElementById('form-estado').value = libro.estado_lectura || 'No iniciado';
     // 3. Cambiamos el texto del botón
     document.getElementById('btn-guardar-libro').innerText = "🔄 Actualizar Expediente";

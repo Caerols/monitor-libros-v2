@@ -33,9 +33,9 @@
                 <p>Tu colección personal. Pasa el ratón sobre un libro para ver sus detalles.</p>
             </header>
             
-            <!-- BOTÓN PARA AGREGAR LIBRO (Abre el Modal) -->
+           <!-- BOTÓN PARA AGREGAR LIBRO (Abre el Modal) -->
             <div style="margin-bottom: 20px; text-align: right;">
-                <button class="btn-primario" onclick="document.getElementById('form-id').value=''; document.getElementById('form-titulo').value=''; document.getElementById('form-autor').value=''; document.getElementById('form-genero').value=''; document.getElementById('form-anio').value=''; document.getElementById('form-isbn').value=''; document.getElementById('form-editorial').value=''; document.getElementById('form-paginas').value=''; document.getElementById('form-palabras').value=''; document.getElementById('form-resumen').value=''; document.getElementById('btn-guardar-libro').innerText='💾 Guardar Expediente en la Matriz'; document.getElementById('modal-ingreso').style.display='flex';">+ Ingresar Nuevo Expediente</button>
+                <button class="btn-primario" onclick="document.getElementById('form-id').value=''; document.getElementById('form-titulo').value=''; document.getElementById('form-autor').value=''; document.getElementById('form-genero').value=''; document.getElementById('form-anio').value=''; document.getElementById('form-isbn').value=''; document.getElementById('form-editorial').value=''; document.getElementById('form-paginas').value=''; document.getElementById('form-palabras').value=''; document.getElementById('form-resumen').value=''; document.getElementById('form-estado').value='No iniciado'; document.getElementById('form-calificacion').value='0'; document.getElementById('btn-guardar-libro').innerText='💾 Guardar Expediente en la Matriz'; document.getElementById('modal-ingreso').style.display='flex';">+ Ingresar Nuevo Expediente</button>
             </div>
 
             <!-- MODAL DE INGRESO / EDICIÓN (Oculto por defecto, capa flotante) -->
@@ -99,6 +99,19 @@
                                 <option value="En lectura">En lectura</option>
                                 <option value="Pendiente">Pendiente</option>
                                 <option value="Finalizado">Finalizado</option>
+                            </select>
+                        </div>
+
+                        <!-- Calificación -->
+                        <div class="form-grupo">
+                            <label>Calificación (Estrellas)</label>
+                            <select id="form-calificacion" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-family: inherit;">
+                                <option value="0">Sin calificar</option>
+                                <option value="1">⭐ (1) Malo</option>
+                                <option value="2">⭐⭐ (2) Regular</option>
+                                <option value="3">⭐⭐⭐ (3) Bueno</option>
+                                <option value="4">⭐⭐⭐⭐ (4) Muy Bueno</option>
+                                <option value="5">⭐⭐⭐⭐⭐ (5) Obra Maestra</option>
                             </select>
                         </div>
                         
