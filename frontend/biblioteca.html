@@ -39,23 +39,16 @@
             </div>
 
             <!-- MODAL DE INGRESO (Oculto por defecto) -->
-            <div id="modal-libro" class="modal-oculto">
-                <div class="modal-contenido">
-                    <span class="cerrar-modal" id="btn-cerrar-modal">&times;</span>
-                    <h2>📝 Registrar Nuevo Libro</h2>
-                    <p style="color: #666; font-size: 14px; margin-bottom: 15px;">
-                        Ingresa el Título y Autor, luego presiona el botón mágico para que la Bibliotecaria investigue el resto.
-                    </p>
-                    
-                    <div class="formulario-grid">
+            <div class="formulario-grid">
                         <!-- Datos Básicos -->
                         <div class="form-grupo">
                             <label>Título del libro *</label>
-                            <input type="text" id="form-titulo" placeholder="Ej: Dune">
+                            <input type="text" id="form-titulo" placeholder="Ej: La metamorfosis">
+                            <input type="hidden" id="form-id"> <!-- Oculto, servirá para editar después -->
                         </div>
                         <div class="form-grupo">
                             <label>Autor *</label>
-                            <input type="text" id="form-autor" placeholder="Ej: Frank Herbert">
+                            <input type="text" id="form-autor" placeholder="Ej: Franz Kafka">
                         </div>
                         
                         <!-- El Botón Mágico -->
@@ -64,14 +57,22 @@
                             <span id="mensaje-investigacion" style="margin-left: 10px; font-size: 13px; font-weight: bold;"></span>
                         </div>
 
-                        <!-- Datos Técnicos (Se llenarán solos) -->
+                        <!-- Datos Técnicos -->
+                        <div class="form-grupo">
+                            <label>Género</label>
+                            <input type="text" id="form-genero" placeholder="Ej: Ficción / Distopía">
+                        </div>
+                        <div class="form-grupo">
+                            <label>Año original</label>
+                            <input type="number" id="form-anio" placeholder="Ej: 1915">
+                        </div>
+                        <div class="form-grupo">
+                            <label>ISBN (Para futura portada)</label>
+                            <input type="text" id="form-isbn" placeholder="Ej: 9788437604947">
+                        </div>
                         <div class="form-grupo">
                             <label>Editorial</label>
                             <input type="text" id="form-editorial">
-                        </div>
-                        <div class="form-grupo">
-                            <label>Año</label>
-                            <input type="number" id="form-anio">
                         </div>
                         <div class="form-grupo">
                             <label>Nº de Páginas</label>
@@ -79,21 +80,20 @@
                         </div>
                         <div class="form-grupo">
                             <label>Palabras (Estimado)</label>
-                            <input type="number" id="form-palabras">
-                        </div>
-                        <div class="form-grupo">
-                            <label>ISBN</label>
-                            <input type="text" id="form-isbn">
+                            <input type="number" id="form-palabras" readonly style="background-color: #f5f5f5;">
                         </div>
                         
-                        <!-- Resumen -->
+                        <!-- Resumen / Contexto -->
                         <div class="form-grupo" style="grid-column: 1 / -1;">
-                            <label>Resumen / Observaciones</label>
-                            <textarea id="form-resumen" rows="3" placeholder="Sinopsis del libro..."></textarea>
+                            <label>Contexto de la época / Epílogo</label>
+                            <textarea id="form-resumen" rows="4" placeholder="Notas sobre la obra, su impacto o tu opinión..."></textarea>
+                        </div>
+
+                        <!-- BOTÓN DE GUARDADO FINAL -->
+                        <div class="form-grupo" style="grid-column: 1 / -1; margin-top: 10px;">
+                            <button id="btn-guardar-libro" class="btn-primario" style="width: 100%; font-size: 16px; padding: 12px; background: #2e7d32;">💾 Guardar Expediente en la Matriz</button>
                         </div>
                     </div>
-                </div>
-            </div>
 
             <!-- CUADRÍCULA DEL CATÁLOGO -->
             <section class="catalogo-grid" id="catalogo-container">

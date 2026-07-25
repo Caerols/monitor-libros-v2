@@ -200,18 +200,26 @@ class BotDatabaseOperations:
     def obtener_catalogo_biblioteca():
         with DatabasePool.get_connection() as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                # Ahora leemos de la misma tabla donde guardamos (biblioteca_personal)
                 query = """
                     SELECT 
-                        b.titulo, COALESCE(a.nombre, 'Autor Desconocido') as autor, 
-                        COALESCE(g.nombre, 'Sin clasificar') as genero, b.editorial,
-                        b.num_paginas, b.isbn, b.formato, b.estado_lectura,
-                        b.calificacion, b.observaciones, c.precio_pagado,
-                        c.tienda, TO_CHAR(c.fecha_compra, 'DD-Mon-YYYY') as fecha_compra
-                    FROM bib_libros b
-                    LEFT JOIN bib_autores a ON b.id_autor = a.id_autor
-                    LEFT JOIN bib_generos g ON b.id_genero = g.id_genero
-                    LEFT JOIN bib_compras c ON b.id_bib = c.id_bib
-                    ORDER BY b.fecha_agregado DESC;
+                        id,
+                        titulo, 
+                        autor, 
+                        COALESCE(genero, 'Sin clasificar') as genero,
+                        anio_publicacion,
+                        editorial,
+                        num_paginas, 
+                        isbn, 
+                        'Físico' as formato, 
+                        estado_lectura,
+                        calificacion, 
+                        observaciones, 
+                        0 as precio_pagado,
+                        'Desconocida' as tienda, 
+                        TO_CHAR(fecha_ingreso, 'DD-Mon-YYYY') as fecha_compra
+                    FROM biblioteca_personal
+                    ORDER BY fecha_ingreso DESC;
                 """
                 cursor.execute(query)
                 return cursor.fetchall()

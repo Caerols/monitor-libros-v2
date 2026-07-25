@@ -75,16 +75,27 @@ document.addEventListener("DOMContentLoaded", () => {
                                 </div>
                             </div>
 
-                            <!-- REVERSO -->
+                           <!-- REVERSO -->
                             <div class="book-card-back">
-                                <h3>Detalles Técnicos</h3>
+                                <h3>Archivo Literario</h3>
                                 <ul class="book-details-list">
-                                    <li><strong>Género:</strong> ${libro.genero}</li>
+                                    <li><strong>Género:</strong> ${libro.genero || 'No especificado'}</li>
                                     <li><strong>Editorial:</strong> ${libro.editorial || 'No especificada'}</li>
+                                    <li><strong>Año Original:</strong> ${libro.anio_publicacion || 'Desconocido'}</li>
                                     <li><strong>Páginas:</strong> ${libro.num_paginas || 0}</li>
-                                    <li><strong>ISBN:</strong> ${libro.isbn || 'N/A'}</li>
-                                    <li><strong>Formato:</strong> ${libro.formato || 'Físico'}</li>
+                                    <li><strong>Palabras:</strong> ${libro.palabras || Math.round((libro.num_paginas || 0) * 250)}</li>
                                 </ul>
+                                
+                                <div class="book-observaciones" style="margin-top: 15px; border-top: 1px dashed #ccc; padding-top: 10px;">
+                                    <strong>Contexto / Epílogo:</strong><br>
+                                    ${observaciones}
+                                </div>
+
+                                <!-- Botón para Editar -->
+                                <button class="btn-editar" onclick="prepararEdicion(${libro.id})" style="margin-top: 15px; width: 100%; padding: 8px; background-color: #ff9800; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
+                                    ✏️ Editar Expediente
+                                </button>
+                            </div>
                                 
                                 <div class="book-finanzas">
                                     💰 <strong>Tienda:</strong> ${libro.tienda || 'Desconocida'}<br>
@@ -200,6 +211,78 @@ document.addEventListener("DOMContentLoaded", () => {
             } finally {
                 btnAutocompletar.disabled = false;
                 btnAutocompletar.style.opacity = "1";
+            }
+        });
+    }
+    // =====================================================================
+    // 3. MOTOR DE CÁLCULO AUTOMÁTICO DE PALABRAS
+    // =====================================================================
+    const inputPaginas = document.getElementById('form-paginas');
+    const inputPalabras = document.getElementById('form-palabras');
+
+    if (inputPaginas && inputPalabras) {
+        inputPaginas.addEventListener('input', (e) => {
+            const paginas = parseInt(e.target.value);
+            if (!isNaN(paginas) && paginas > 0) {
+                inputPalabras.value = paginas * 250; // Estándar editorial
+            } else {
+                inputPalabras.value = "";
+            }
+        });
+    }
+    // =====================================================================
+    // 4. LÓGICA DE GUARDADO EN LA BASE DE DATOS
+    // =====================================================================
+    const btnGuardar = document.getElementById('btn-guardar-libro');
+    
+    if (btnGuardar) {
+        btnGuardar.addEventListener('click', async () => {
+            // Recopilamos los datos del formulario
+            const libroData = {
+                titulo: document.getElementById('form-titulo').value.trim(),
+                autor: document.getElementById('form-autor').value.trim(),
+                genero: document.getElementById('form-genero').value.trim(),
+                anio_publicacion: document.getElementById('form-anio').value,
+                isbn: document.getElementById('form-isbn').value.trim(), // ¡Dato agregado!
+                editorial: document.getElementById('form-editorial').value.trim(),
+                num_paginas: document.getElementById('form-paginas').value,
+                palabras: document.getElementById('form-palabras').value,
+                observaciones: document.getElementById('form-resumen').value.trim(),
+                estado_lectura: "No iniciado", 
+                calificacion: 0
+            };
+
+            if (!libroData.titulo || !libroData.autor) {
+                alert("⚠️ El Título y el Autor son obligatorios para el archivo.");
+                return;
+            }
+
+            btnGuardar.innerText = "⏳ Guardando...";
+            btnGuardar.disabled = true;
+
+            try {
+                // Aquí enviaremos los datos a tu servidor Python (FastAPI)
+                const response = await fetch('https://bibliotecaria-bot.onrender.com/api/biblioteca/guardar', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(libroData)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    alert("✅ ¡Expediente guardado con éxito en la Matriz!");
+                    modal.style.display = "none";
+                    location.reload(); // Recarga para ver la nueva tarjeta
+                } else {
+                    alert("❌ Error de la matriz: " + result.detail);
+                }
+            } catch (error) {
+                console.error("Error al guardar:", error);
+                alert("⚠️ No se pudo conectar con los servidores centrales.");
+            } finally {
+                btnGuardar.innerText = "💾 Guardar Expediente en la Matriz";
+                btnGuardar.disabled = false;
             }
         });
     }
