@@ -304,6 +304,58 @@ canvas {
         text-align: center !important;
         box-sizing: border-box !important;
     }
+    /* =========================================================
+       REPARACIÓN DEL MODAL DE EXPEDIENTE (SOLO MÓVILES)
+       ========================================================= */
+    
+    /* 1. Romper la cuadrícula de 2 columnas y apilar en vertical */
+    .formulario-grid {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 12px !important;
+    }
+
+    .form-grupo {
+        width: 100% !important;
+        margin-bottom: 5px !important;
+    }
+    
+    /* 2. Ajustar los textos y campos para dedos y pantallas chicas */
+    .form-grupo label {
+        font-size: 14px !important;
+        margin-bottom: 4px !important;
+        display: block !important;
+    }
+
+    .form-grupo input, 
+    .form-grupo select, 
+    .form-grupo textarea {
+        width: 100% !important;
+        font-size: 16px !important; /* 16px previene el zoom automático molesto en iOS/Android */
+        padding: 12px !important; /* Cajas más altas para que sea fácil tocarlas */
+        box-sizing: border-box !important;
+    }
+    
+    /* 3. Aprovechar mejor el espacio de la pantalla para el cuadro blanco */
+    #modal-ingreso > div {
+        width: 95% !important;
+        padding: 20px 15px !important;
+        max-height: 90vh !important;
+    }
+    
+    /* 4. Ajustar el botón de "Autocompletar" para que no se desborde */
+    .btn-magico {
+        width: 100% !important;
+        padding: 12px !important;
+        font-size: 14px !important;
+        margin-bottom: 10px !important;
+    }
+    
+    #mensaje-investigacion {
+        display: block !important;
+        margin-left: 0 !important;
+        margin-top: 5px !important;
+    }
 }
 
 @keyframes fadeIn {
