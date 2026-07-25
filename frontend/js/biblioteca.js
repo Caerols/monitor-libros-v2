@@ -79,10 +79,10 @@ document.addEventListener("DOMContentLoaded", () => {
                                 </div>
                             </div>
 
-                           <!-- REVERSO -->
-                            <div class="book-card-back">
-                                <h3>Archivo Literario</h3>
-                                <ul class="book-details-list">
+                            <!-- REVERSO -->
+                            <div class="book-card-back" style="display: flex; flex-direction: column; height: 100%; max-height: 100%; box-sizing: border-box; overflow: hidden; padding-bottom: 20px;">
+                                <h3 style="flex-shrink: 0;">Archivo Literario</h3>
+                                <ul class="book-details-list" style="flex-shrink: 0;">
                                     <li><strong>Género:</strong> ${libro.genero || 'No especificado'}</li>
                                     <li><strong>Editorial:</strong> ${libro.editorial || 'No especificada'}</li>
                                     <li><strong>Año Original:</strong> ${libro.anio_publicacion || 'Desconocido'}</li>
@@ -90,22 +90,22 @@ document.addEventListener("DOMContentLoaded", () => {
                                     <li><strong>Palabras:</strong> ${libro.palabras || Math.round((libro.num_paginas || 0) * 250)}</li>
                                 </ul>
                                 
-                                <div class="book-observaciones" style="margin-top: 15px; border-top: 1px dashed #ccc; padding-top: 10px; margin-bottom: 10px;">
+                                <!-- Caja de texto con Scroll Inteligente (El truco está en min-height: 0 y flex: 1) -->
+                                <div class="book-observaciones" style="flex: 1 1 auto; overflow-y: auto; min-height: 0; margin-top: 10px; border-top: 1px dashed #ccc; padding-top: 10px; margin-bottom: 15px; padding-right: 5px;">
                                     <strong>Contexto / Epílogo:</strong><br>
                                     ${observaciones}
                                 </div>
 
-                                <!-- Botones de Control de Expediente -->
-                                <button class="btn-editar" onclick="prepararEdicion(${libro.id})" style="margin-top: auto; width: 100%; padding: 8px; background-color: #ff9800; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
-                                    ✏️ Editar Expediente
-                                </button>
-                                <button class="btn-eliminar" onclick="eliminarLibro(${libro.id})" style="margin-top: 5px; width: 100%; padding: 8px; background-color: #d32f2f; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
-                                    🗑️ Eliminar Archivo
-                                </button>
+                                <!-- Contenedor de Botones (Protegidos para que nunca se encojan) -->
+                                <div style="flex-shrink: 0; margin-top: auto;">
+                                    <button class="btn-editar" onclick="prepararEdicion(${libro.id})" style="width: 100%; padding: 8px; background-color: #ff9800; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; margin-bottom: 8px;">
+                                        ✏️ Editar Expediente
+                                    </button>
+                                    <button class="btn-eliminar" onclick="eliminarLibro(${libro.id})" style="width: 100%; padding: 8px; background-color: #d32f2f; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
+                                        🗑️ Eliminar Archivo
+                                    </button>
+                                </div>
                             </div>
-
-                        </div>
-                    </div>
                 `;
                 contenedorCatalogo.innerHTML += tarjetaHTML;
             });
