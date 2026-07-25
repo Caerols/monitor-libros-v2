@@ -153,46 +153,42 @@ document.addEventListener("DOMContentLoaded", () => {
             btnAutocompletar.style.opacity = "0.7";
 
             try {
-                // BYPASS: Atacamos la API de Google directamente desde el navegador del usuario
-                const queryEncoded = encodeURIComponent(`${titulo} ${autor}`);
-                const urlGoogle = `https://www.googleapis.com/books/v1/volumes?q=${queryEncoded}&maxResults=1&langRestrict=es`;
+                // BYPASS v2: Pivotamos a OpenLibrary (Internet Archive) para evadir el bloqueo de Google y CGNAT
+                const urlOpenLibrary = `https://openlibrary.org/search.json?title=${encodeURIComponent(titulo)}&author=${encodeURIComponent(autor)}`;
                 
-                const response = await fetch(urlGoogle);
-                if (!response.ok) throw new Error("Google rechazó la conexión local.");
+                const response = await fetch(urlOpenLibrary);
+                if (!response.ok) throw new Error("OpenLibrary rechazó la conexión.");
                 
                 const data = await response.json();
 
-                if (data.items && data.items.length > 0) {
-                    const info = data.items[0].volumeInfo;
+                if (data.docs && data.docs.length > 0) {
+                    const info = data.docs[0];
                     
-                    // Extraer páginas
-                    const paginas = info.pageCount || "";
-                    
-                    // Extraer ISBN limpio
-                    let isbnLimpio = "";
-                    if (info.industryIdentifiers) {
-                        const isbn13 = info.industryIdentifiers.find(id => id.type === 'ISBN_13');
-                        isbnLimpio = isbn13 ? isbn13.identifier : info.industryIdentifiers[0].identifier;
-                    }
+                    // Extraer datos (OpenLibrary usa arreglos para algunas cosas)
+                    const paginas = info.number_of_pages_median || "";
+                    const editorial = info.publisher ? info.publisher[0] : "";
+                    const isbnLimpio = info.isbn ? info.isbn[0] : "";
+                    const anio = info.first_publish_year || "";
 
                     // Rellenar el formulario
-                    document.getElementById('form-editorial').value = info.publisher || "";
-                    document.getElementById('form-anio').value = info.publishedDate ? info.publishedDate.substring(0, 4) : "";
+                    document.getElementById('form-editorial').value = editorial;
+                    document.getElementById('form-anio').value = anio;
                     document.getElementById('form-paginas').value = paginas;
-                    document.getElementById('form-palabras').value = paginas ? paginas * 250 : "";
+                    document.getElementById('form-palabras').value = paginas ? Math.round(paginas * 250) : "";
                     document.getElementById('form-isbn').value = isbnLimpio;
-                    document.getElementById('form-resumen').value = info.description || "Sin resumen disponible.";
+                    
+                    // OpenLibrary Search no trae el resumen en la primera búsqueda, lo dejamos para notas manuales
+                    document.getElementById('form-resumen').value = "Resumen no disponible en la base de datos libre. (Añadir nota manual aquí).";
                     
                     mensajeInvestigacion.style.color = "#2e7d32"; 
-                    mensajeInvestigacion.innerText = "✅ Expediente extraído vía Bypass con éxito.";
+                    mensajeInvestigacion.innerText = "✅ Expediente extraído desde OpenLibrary con éxito.";
                 } else {
                     mensajeInvestigacion.style.color = "#d32f2f";
-                    mensajeInvestigacion.innerText = "❌ Los archivos de Google no tienen este libro.";
+                    mensajeInvestigacion.innerText = "❌ Los archivos de OpenLibrary no tienen este libro.";
                 }
             } catch (error) {
-                console.error("Error detallado en Bypass:", error);
+                console.error("Error detallado en Bypass v2:", error);
                 mensajeInvestigacion.style.color = "#d32f2f";
-                // Interpolamos el error real para verlo en la interfaz
                 mensajeInvestigacion.innerText = `⚠️ Error: ${error.message}`;
             } finally {
                 btnAutocompletar.disabled = false;
