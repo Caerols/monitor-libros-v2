@@ -153,7 +153,7 @@ document.addEventListener("DOMContentLoaded", () => {
             btnAutocompletar.style.opacity = "0.7";
 
             try {
-                // BYPASS v2: Pivotamos a OpenLibrary (Internet Archive) para evadir el bloqueo de Google y CGNAT
+                // BYPASS v3: OpenLibrary con Escaneo Profundo de Metadatos
                 const urlOpenLibrary = `https://openlibrary.org/search.json?title=${encodeURIComponent(titulo)}&author=${encodeURIComponent(autor)}`;
                 
                 const response = await fetch(urlOpenLibrary);
@@ -162,32 +162,39 @@ document.addEventListener("DOMContentLoaded", () => {
                 const data = await response.json();
 
                 if (data.docs && data.docs.length > 0) {
-                    const info = data.docs[0];
-                    
-                    // Extraer datos (OpenLibrary usa arreglos para algunas cosas)
-                    const paginas = info.number_of_pages_median || "";
-                    const editorial = info.publisher ? info.publisher[0] : "";
-                    const isbnLimpio = info.isbn ? info.isbn[0] : "";
-                    const anio = info.first_publish_year || "";
+                    // Variables vacías para irlas llenando con lo mejor que encontremos
+                    let paginas = "";
+                    let editorial = "";
+                    let isbnLimpio = "";
+                    let anio = data.docs[0].first_publish_year || "";
 
-                    // Rellenar el formulario
-                    document.getElementById('form-editorial').value = editorial;
+                    // Escaneo profundo: Revisamos los 10 primeros resultados buscando los datos que faltan
+                    for (let i = 0; i < Math.min(data.docs.length, 10); i++) {
+                        const info = data.docs[i];
+                        if (!paginas && info.number_of_pages_median) paginas = info.number_of_pages_median;
+                        if (!editorial && info.publisher) editorial = info.publisher[0];
+                        if (!isbnLimpio && info.isbn) isbnLimpio = info.isbn[0];
+                        
+                        // Si ya completamos todo, detenemos el escáner para ahorrar memoria
+                        if (paginas && editorial && isbnLimpio) break;
+                    }
+
+                    // Rellenar el formulario con los datos fusionados
+                    document.getElementById('form-editorial').value = editorial || "Desconocida";
                     document.getElementById('form-anio').value = anio;
                     document.getElementById('form-paginas').value = paginas;
                     document.getElementById('form-palabras').value = paginas ? Math.round(paginas * 250) : "";
-                    document.getElementById('form-isbn').value = isbnLimpio;
-                    
-                    // OpenLibrary Search no trae el resumen en la primera búsqueda, lo dejamos para notas manuales
+                    document.getElementById('form-isbn').value = isbnLimpio || "N/A";
                     document.getElementById('form-resumen').value = "Resumen no disponible en la base de datos libre. (Añadir nota manual aquí).";
                     
                     mensajeInvestigacion.style.color = "#2e7d32"; 
-                    mensajeInvestigacion.innerText = "✅ Expediente extraído desde OpenLibrary con éxito.";
+                    mensajeInvestigacion.innerText = "✅ Expediente extraído con Escaneo Profundo.";
                 } else {
                     mensajeInvestigacion.style.color = "#d32f2f";
                     mensajeInvestigacion.innerText = "❌ Los archivos de OpenLibrary no tienen este libro.";
                 }
             } catch (error) {
-                console.error("Error detallado en Bypass v2:", error);
+                console.error("Error detallado en Bypass v3:", error);
                 mensajeInvestigacion.style.color = "#d32f2f";
                 mensajeInvestigacion.innerText = `⚠️ Error: ${error.message}`;
             } finally {
