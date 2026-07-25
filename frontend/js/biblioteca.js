@@ -272,7 +272,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 if (response.ok) {
                     alert("✅ ¡Expediente guardado con éxito en la Matriz!");
-                    modal.style.display = "none";
                     location.reload(); // Recarga para ver la nueva tarjeta
                 } else {
                     alert("❌ Error de la matriz: " + result.detail);
