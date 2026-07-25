@@ -201,7 +201,6 @@ canvas {
         background-color: #1a237e !important;
     }
 
-    /* Mostrar botón hamburguesa */
     .btn-menu-mobile {
         display: block !important;
     }
@@ -247,7 +246,7 @@ canvas {
         overflow-x: hidden !important;
     }
 
-    /* Forzamos a todos los componentes a respetar el ancho de pantalla */
+    /* LA MAGIA ANTI-DESBORDAMIENTO: min-width: 0 fuerza a las cajas a encogerse */
     .dashboard-container, 
     .chart-container, 
     .dashboard-card, 
@@ -257,31 +256,47 @@ canvas {
     .panel-control {
         width: 100% !important;
         max-width: 100% !important;
+        min-width: 0 !important; 
         box-sizing: border-box !important;
         margin-left: 0 !important;
         margin-right: 0 !important;
     }
 
-    /* KPIS EN 1 SOLA COLUMNA */
+    /* Convertimos el Grid problemático en Flexbox seguro para móviles */
     #kpi-container, .kpi-grid {
-        grid-template-columns: 1fr !important;
-        gap: 10px !important;
+        display: flex !important;
+        flex-direction: column !important;
         width: 100% !important;
         max-width: 100% !important;
+        gap: 10px !important;
     }
 
     .kpi-card {
         width: 100% !important;
         max-width: 100% !important;
+        min-width: 0 !important;
         box-sizing: border-box !important;
         padding: 15px 10px !important;
         border-radius: 8px !important;
     }
 
-    /* Textos del KPI responsivos */
-    .kpi-card h3 { font-size: 13px !important; margin-bottom: 5px !important; }
+    /* Evitar que los textos empujen el ancho de la caja */
+    .kpi-card h3 { 
+        font-size: 13px !important; 
+        margin-bottom: 5px !important; 
+        white-space: normal !important; /* Permite bajar de línea */
+        word-wrap: break-word !important; 
+    }
+
     .tendencia-baja, .tendencia-alta, .kpi-card p, .kpi-card .precio { font-size: 20px !important; }
     .kpi-card div, .kpi-card .minimo { font-size: 11px !important; }
+
+    /* Forzar gráficos HTML a ajustarse al celular */
+    canvas {
+        width: 100% !important;
+        max-width: 100% !important;
+        height: auto !important;
+    }
 
     .btn-primario {
         width: 100% !important;
