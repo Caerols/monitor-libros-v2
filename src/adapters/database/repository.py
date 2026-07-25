@@ -1,15 +1,17 @@
 # src/adapters/database/repository.py
 import logging
-from typing import List
+from typing import List, Dict, Any
 from datetime import date
-from psycopg2.extras import execute_values
+from psycopg2.extras import execute_values, RealDictCursor
+
 from src.core.models import Libro
 from src.adapters.database.connection import DatabasePool
 
-logger = logging.getLogger(__name__)
-
 class LibroRepository:
-    """Encapsula todas las operaciones de persistencia para la entidad Libro."""
+    """
+    Encapsula todas las operaciones de persistencia para la entidad Libro.
+    Actúa como el archivero del Gremio, gestionando el Star Schema en la Matriz.
+    """
 
     def __init__(self):
         self.logger = logging.getLogger(__name__)
@@ -40,7 +42,7 @@ class LibroRepository:
     def guardar_libros(self, libros: List[Libro]) -> None:
         """Guarda los libros usando Star Schema mediante Bulk Inserts atómicos."""
         if not libros:
-            self.logger.warning("No hay libros para guardar. Operación omitida.")
+            self.logger.warning("No hay presas para guardar. Operación omitida.")
             return
 
         with DatabasePool.get_connection() as conn:
@@ -60,7 +62,7 @@ class LibroRepository:
                         RETURNING id_libro, url_buscalibre;
                     """
                     
-                    # FIX APLICADO: Agregamos fetch=True y capturamos los resultados directamente
+                    # Ejecución optimizada en bloque
                     resultados_dim = execute_values(
                         cursor, 
                         query_dim, 
@@ -69,7 +71,6 @@ class LibroRepository:
                         fetch=True
                     )
                     
-                    # Validamos que obtuvimos resultados para evitar errores de clave
                     if not resultados_dim:
                         self.logger.warning("No se insertaron ni actualizaron dimensiones de libros.")
                         return
@@ -95,9 +96,9 @@ class LibroRepository:
                             template="(%s, %s, %s, CURRENT_TIMESTAMP)"
                         )
 
-                    # Confirmamos la transacción completa
+                    # Confirmamos la transacción completa (Commit atómico)
                     conn.commit()
-                    self.logger.info(f"Se procesaron masivamente {len(libros)} libros en el Star Schema.")
+                    self.logger.info(f"Se procesaron masivamente {len(libros)} presas en los archivos.")
                     
                 except Exception as e:
                     conn.rollback()
@@ -105,7 +106,7 @@ class LibroRepository:
                     raise
 
     def obtener_listas_activas(self) -> List[str]:
-        """Obtiene las URLs de las listas de Buscalibre desde la base de datos."""
+        """Obtiene los territorios de caza (URLs de listas) desde la base de datos."""
         query = "SELECT url_lista FROM listas_monitoreo WHERE estado = 'Activo';"
         
         try:
@@ -116,12 +117,43 @@ class LibroRepository:
                     urls = [fila[0] for fila in resultados]
             
             if not urls:
-                self.logger.warning("No se encontraron listas activas en 'listas_monitoreo'.")
+                self.logger.warning("No se encontraron territorios activos en 'listas_monitoreo'.")
             else:
-                self.logger.info(f"Se obtuvieron {len(urls)} listas activas desde la BD.")
+                self.logger.info(f"Se obtuvieron {len(urls)} territorios de caza desde la BD.")
                 
             return urls
             
         except Exception as e:
             self.logger.error(f"Error al leer listas_monitoreo: {str(e)}")
             raise
+
+    def obtener_estadisticas_historicas(self, url: str) -> Dict[str, Any]:
+        """
+        Consulta los archivos históricos para obtener el precio anterior, 
+        máximo y mínimo de una presa antes de que se registre su nuevo movimiento.
+        """
+        query = """
+            SELECT 
+                (SELECT precio FROM fact_precio WHERE id_libro = l.id_libro ORDER BY id_fecha DESC, hora_monitoreo DESC LIMIT 1) as precio_anterior,
+                (SELECT MAX(precio) FROM fact_precio WHERE id_libro = l.id_libro) as precio_maximo,
+                (SELECT MIN(precio) FROM fact_precio WHERE id_libro = l.id_libro) as precio_minimo
+            FROM dim_libro l
+            WHERE l.url_buscalibre = %s;
+        """
+        
+        try:
+            with DatabasePool.get_connection() as conn:
+                with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                    cursor.execute(query, (url,))
+                    resultado = cursor.fetchone()
+                    
+                    # Validamos si el libro ya existía y tiene precios previos
+                    if resultado and resultado['precio_anterior'] is not None:
+                        return dict(resultado)
+                    
+                    # Si la presa es nueva, devolvemos un historial vacío
+                    return {}
+                    
+        except Exception as e:
+            self.logger.error(f"Error consultando estadísticas históricas para {url}: {e}")
+            return {}
