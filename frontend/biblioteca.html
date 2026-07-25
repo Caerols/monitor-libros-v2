@@ -11,10 +11,12 @@
     <div class="app-layout">
         <!-- SUBMENÚ LATERAL -->
         <aside class="sidebar">
-            <div class="sidebar-header">
-                <h2>Matriz Central</h2>
+            <div class="sidebar-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <h2 style="margin: 0;">Matriz Central</h2>
+                <!-- Botón Hamburguesa (Oculto en PC, visible en móvil) -->
+                <button class="btn-menu-mobile" onclick="document.getElementById('nav-menu').classList.toggle('show-menu')" style="background: none; border: none; color: white; font-size: 28px; cursor: pointer;">☰</button>
             </div>
-            <nav class="sidebar-nav">
+            <nav class="sidebar-nav" id="nav-menu">
                 <p class="nav-section">Módulo Principal</p>
                 <a href="index.html" class="nav-link">📊 Ofertas e Historial</a>
                 

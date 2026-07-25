@@ -1,3 +1,6 @@
+/* =====================================================================
+   1. ESTILOS BASE Y RESET
+   ===================================================================== */
 * {
     margin: 0;
     padding: 0;
@@ -8,7 +11,7 @@
 body {
     background-color: #f0f2f5;
     color: #333;
-    padding: 2rem;
+    padding: 2rem; /* Este padding se anulará en celulares */
 }
 
 .dashboard-container {
@@ -16,6 +19,9 @@ body {
     margin: 0 auto;
 }
 
+/* =====================================================================
+   2. CABECERA (HEADER)
+   ===================================================================== */
 header {
     text-align: center;
     margin-bottom: 2rem;
@@ -32,18 +38,31 @@ header p {
     margin-top: 0.5rem;
 }
 
-/* Filtro */
+/* Botón Hamburguesa (Oculto en PC) */
+.btn-menu-mobile {
+    display: none; 
+}
+
+/* =====================================================================
+   3. COMPONENTES DE INTERFAZ (UI)
+   ===================================================================== */
+/* Filtros y Buscadores */
 .panel-control {
-    margin-bottom: 1.5rem;
+    width: 100%;
+    margin-bottom: 20px;
+    padding: 10px;
     text-align: center;
 }
-.panel-control select {
-    padding: 0.6rem 1rem;
-    font-size: 1rem;
+
+.panel-control select,
+#filtroLibro {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
     border-radius: 8px;
-    border: 1px solid #ccc;
-    cursor: pointer;
+    border: 2px solid #2b3a67;
     background-color: white;
+    cursor: pointer;
 }
 
 /* Alertas Predictivas */
@@ -58,103 +77,30 @@ header p {
 .alerta.warning { background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
 .oculta { display: none; }
 
-/* Grid de KPIs */
-.kpi-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 1rem;
-    margin-bottom: 2rem;
-}
-
-.kpi-card {
-    background: white;
-    padding: 1.5rem;
-    border-radius: 12px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-    text-align: center;
-    border-top: 5px solid #ccc;
-    transition: transform 0.2s;
-}
-.kpi-card:hover {
-    transform: translateY(-5px);
-}
-.kpi-card h3 {
-    font-size: 0.95rem;
-    color: #666;
-    margin-bottom: 0.8rem;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-.kpi-card .precio {
-    font-size: 1.8rem;
-    font-weight: bold;
-    color: #333;
-}
-.kpi-card .minimo {
-    font-size: 0.85rem;
-    color: #888;
-    margin-top: 0.3rem;
-}
-.kpi-card .estado {
-    margin-top: 1rem;
-    font-size: 0.9rem;
-    font-weight: bold;
-    padding: 0.4rem 0;
-    border-radius: 6px;
-}
-
-/* Colores del Semáforo */
-.estado-verde { border-top-color: #4caf50; }
-.estado-verde .estado { background-color: #e8f5e9; color: #2e7d32; }
-.estado-amarillo { border-top-color: #ffc107; }
-.estado-amarillo .estado { background-color: #fff8e1; color: #f57f17; }
-.estado-rojo { border-top-color: #f44336; }
-.estado-rojo .estado { background-color: #ffebee; color: #c62828; }
-
+/* Gráficos */
 .chart-box {
-    background-color: #ffffff;
+    position: relative;
+    height: 300px; 
+    width: 100%;
+    margin-top: 20px;
+    padding: 10px;
+    background: #ffffff;
     border-radius: 12px;
-    padding: 2rem;
     box-shadow: 0 4px 15px rgba(0,0,0,0.05);
 }
 
-.kpi-card {
-    background: #ffffff;
-    padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-    flex: 1;
-    text-align: center;
-    border-top: 5px solid #2b3a67; /* Un azul oscuro elegante */
+canvas {
+    max-height: 100%;
 }
 
-.kpi-card h3 { 
-    margin: 0 0 10px 0; 
-    font-size: 15px; 
-    color: #666; 
-}
-
-.kpi-card p { 
-    margin: 0; 
-    font-size: 26px; 
-    font-weight: bold; 
-    color: #222; 
-}
-
-/* Colores automáticos para la tendencia */
-.tendencia-baja { color: #28a745 !important; } /* Verde si bajó */
-.tendencia-alta { color: #dc3545 !important; } /* Rojo si subió */
-
-/* =========================================
-   DISEÑO DE TARJETAS (KPIs) Y RESPONSIVE
-   ========================================= */
-
-/* Forzamos una grilla moderna en vez del Flexbox básico */
-#kpi-container {
+/* =====================================================================
+   4. TARJETAS DE KPIs (Dashboard)
+   ===================================================================== */
+#kpi-container, .kpi-grid {
     display: grid !important;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
     gap: 15px !important;
+    margin-bottom: 2rem;
 }
 
 .kpi-card {
@@ -167,78 +113,173 @@ header p {
     display: flex;
     flex-direction: column;
     justify-content: center;
+    transition: transform 0.2s;
+}
+
+.kpi-card:hover {
+    transform: translateY(-5px);
 }
 
 .kpi-card h3 { 
-    margin: 0 0 8px 0; 
+    margin: 0 0 10px 0; 
     font-size: 15px; 
-    color: #444; 
+    color: #666; 
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
+
+.kpi-card p, .kpi-card .precio { 
+    margin: 0; 
+    font-size: 26px; 
+    font-weight: bold; 
+    color: #222; 
+}
+
+.kpi-card .minimo {
+    font-size: 0.85rem;
+    color: #888;
+    margin-top: 0.3rem;
+}
+
+/* Estados y Tendencias */
+.kpi-card .estado {
+    margin-top: 1rem;
+    font-size: 0.9rem;
+    font-weight: bold;
+    padding: 0.4rem 0;
+    border-radius: 6px;
+}
+.estado-verde { border-top-color: #4caf50; }
+.estado-verde .estado { background-color: #e8f5e9; color: #2e7d32; }
+.estado-amarillo { border-top-color: #ffc107; }
+.estado-amarillo .estado { background-color: #fff8e1; color: #f57f17; }
+.estado-rojo { border-top-color: #f44336; }
+.estado-rojo .estado { background-color: #ffebee; color: #c62828; }
 
 .tendencia-baja { color: #28a745 !important; font-weight: bold; font-size: 26px; margin: 0; }
 .tendencia-alta { color: #dc3545 !important; font-weight: bold; font-size: 26px; margin: 0; }
-.kpi-card p:not(.tendencia-baja):not(.tendencia-alta) { font-weight: bold; font-size: 26px; margin: 0; }
 
-/* =========================================
-   📱 MODO CELULAR (PANTALLAS CHICAS)
-   ========================================= */
+/* =====================================================================
+   5. MODO CELULAR COMPACTO (Para KPIs)
+   ===================================================================== */
 @media (max-width: 600px) {
-    #kpi-container {
-        grid-template-columns: 1fr; /* Una sola columna en celu */
+    #kpi-container, .kpi-grid {
+        grid-template-columns: 1fr;
         gap: 10px !important;
     }
-
     .kpi-card {
-        padding: 12px 10px; /* Menos relleno para no gastar pantalla */
+        padding: 12px 10px;
         border-radius: 8px;
     }
-    
     .kpi-card h3 {
-        font-size: 13px; /* Letra más chica para los títulos largos */
+        font-size: 13px;
         margin-bottom: 5px;
     }
-
-    .tendencia-baja, 
-    .tendencia-alta,
-    .kpi-card p {
-        font-size: 20px !important; /* Precio principal más compacto */
+    .tendencia-baja, .tendencia-alta, .kpi-card p, .kpi-card .precio {
+        font-size: 20px !important;
     }
-    
-    /* Achicamos la info secundaria (Mejor precio y estado) */
-    .kpi-card div {
+    .kpi-card div, .kpi-card .minimo {
         font-size: 11px !important; 
     }
 }
 
-/* --- AJUSTES MOBILE RESPONSIVE --- */
+/* =====================================================================
+   6. MODO RESPONSIVO GENERAL Y MENÚ HAMBURGUESA (Tablets y Smartphones)
+   ===================================================================== */
+@media screen and (max-width: 768px) {
+    /* Anular el padding gigante que aplastaba los gráficos */
+    body {
+        padding: 0 !important;
+    }
 
-/* 1. Mejorar el buscador para que se vea como un input amigable */
-.panel-control {
-    width: 100%;
-    margin-bottom: 20px;
-    padding: 10px;
+    /* Estructura vertical */
+    .app-layout {
+        display: flex;
+        flex-direction: column;
+        height: auto;
+        min-height: 100vh;
+    }
+
+    /* La barra superior azul */
+    .sidebar {
+        width: 100%;
+        height: auto;
+        min-height: auto;
+        padding: 0;
+        position: relative;
+        z-index: 50;
+    }
+
+    .sidebar-header {
+        padding: 15px 20px;
+    }
+
+    /* Mostrar el botón hamburguesa */
+    .btn-menu-mobile {
+        display: block !important;
+    }
+
+    /* Menú Desplegable (Oculto por defecto) */
+    .sidebar-nav {
+        display: none; 
+        flex-direction: column;
+        width: 100%;
+        background-color: #151b54; 
+        padding: 0;
+    }
+
+    /* Clase mágica activada por JS */
+    .sidebar-nav.show-menu {
+        display: flex;
+        animation: fadeIn 0.3s ease-in-out;
+    }
+
+    /* Ocultar textos secundarios */
+    .nav-section {
+        display: none;
+    }
+
+    /* Adaptar botones del menú al formato lista vertical */
+    .sidebar-nav .nav-link {
+        border-left: none;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 0;
+        margin: 0;
+        padding: 15px 20px;
+    }
+
+    .sidebar-nav .nav-link.active {
+        border-left: none;
+        background-color: rgba(26, 188, 156, 0.2); 
+    }
+
+    /* Contenido principal con espacio para respirar */
+    .main-content {
+        width: 100%;
+        padding: 15px 10px;
+        overflow-x: hidden;
+    }
+
+    /* Forzar a las cajas a no salirse de la pantalla */
+    .chart-container, .dashboard-card, .formulario-grid, .chart-box {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box;
+        margin-left: 0;
+        margin-right: 0;
+    }
+
+    /* Ajuste del botón primario */
+    .btn-primario {
+        width: 100%;
+        margin-top: 10px;
+        text-align: center;
+    }
 }
 
-#filtroLibro {
-    width: 100%;
-    padding: 12px;
-    border-radius: 8px;
-    border: 2px solid #2b3a67;
-    font-size: 16px; /* Evita zoom automático en iOS */
-}
-
-/* 2. Arreglar el gráfico: hacerlo más alto y mover la leyenda */
-.chart-box {
-    position: relative;
-    height: 300px; /* Le damos altura fija para que no se achate */
-    width: 100%;
-    margin-top: 20px;
-    padding: 10px;
-    background: #fff;
-    border-radius: 12px;
-}
-
-/* 3. Ajuste para que el gráfico no se deforme */
-canvas {
-    max-height: 100%;
+/* Animación de caída para el menú hamburguesa */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
