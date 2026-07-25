@@ -70,13 +70,9 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderizarGraficos(libros) {
         if (!libros || libros.length === 0) return;
 
-        // --- Preparar datos para Gráfico de Estados ---
         let conteoEstados = { "Finalizado": 0, "En lectura": 0, "Pendiente": 0, "No iniciado": 0 };
-        
-        // --- Preparar datos para Gráfico de Calificaciones ---
         let conteoCalificaciones = { "5": 0, "4": 0, "3": 0, "2": 0, "1": 0, "0": 0 };
 
-        // Contar los libros
         libros.forEach(libro => {
             const estado = libro.estado_lectura || "No iniciado";
             if (conteoEstados[estado] !== undefined) conteoEstados[estado]++;
@@ -85,7 +81,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (conteoCalificaciones[calificacion] !== undefined) conteoCalificaciones[calificacion]++;
         });
 
-        // --- Configuración Global de Chart.js ---
         Chart.defaults.font.family = "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
         Chart.defaults.color = '#666';
 
@@ -109,9 +104,12 @@ document.addEventListener('DOMContentLoaded', () => {
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: false,
+                maintainAspectRatio: false, // ¡Clave para que respete el tamaño del div!
                 plugins: {
-                    legend: { position: 'bottom' }
+                    legend: { 
+                        position: 'bottom',
+                        labels: { boxWidth: 12, padding: 10 }
+                    }
                 }
             }
         });
@@ -138,15 +136,15 @@ document.addEventListener('DOMContentLoaded', () => {
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: false,
+                maintainAspectRatio: false, // ¡Clave aquí también!
                 scales: {
                     y: { 
                         beginAtZero: true, 
-                        ticks: { stepSize: 1 } // Para que no muestre decimales en la cantidad de libros
+                        ticks: { stepSize: 1 } 
                     }
                 },
                 plugins: {
-                    legend: { display: false } // Ocultamos la leyenda extraña
+                    legend: { display: false }
                 }
             }
         });
