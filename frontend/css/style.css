@@ -11,7 +11,7 @@
 body {
     background-color: #f0f2f5;
     color: #333;
-    padding: 2rem; /* Este padding se anulará en celulares */
+    padding: 2rem; 
 }
 
 .dashboard-container {
@@ -46,7 +46,6 @@ header p {
 /* =====================================================================
    3. COMPONENTES DE INTERFAZ (UI)
    ===================================================================== */
-/* Filtros y Buscadores */
 .panel-control {
     width: 100%;
     margin-bottom: 20px;
@@ -65,7 +64,6 @@ header p {
     cursor: pointer;
 }
 
-/* Alertas Predictivas */
 .alerta {
     padding: 1rem;
     border-radius: 8px;
@@ -77,7 +75,6 @@ header p {
 .alerta.warning { background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
 .oculta { display: none; }
 
-/* Gráficos */
 .chart-box {
     position: relative;
     height: 300px; 
@@ -142,7 +139,6 @@ canvas {
     margin-top: 0.3rem;
 }
 
-/* Estados y Tendencias */
 .kpi-card .estado {
     margin-top: 1rem;
     font-size: 0.9rem;
@@ -188,31 +184,38 @@ canvas {
    6. MODO RESPONSIVO GENERAL Y MENÚ HAMBURGUESA (Tablets y Smartphones)
    ===================================================================== */
 @media screen and (max-width: 768px) {
-    /* Anular el padding gigante que aplastaba los gráficos */
-    body {
+    /* Forzar limpieza de márgenes y prevenir barra de scroll blanca */
+    body, html {
         padding: 0 !important;
+        margin: 0 !important;
+        overflow-x: hidden !important;
     }
 
-    /* Estructura vertical */
     .app-layout {
-        display: flex;
-        flex-direction: column;
-        height: auto;
-        min-height: 100vh;
+        display: flex !important;
+        flex-direction: column !important;
+        width: 100% !important;
     }
 
-    /* La barra superior azul */
+    /* Forzar la barra azul a cubrir el 100% de la pantalla */
     .sidebar {
-        width: 100%;
-        height: auto;
-        min-height: auto;
-        padding: 0;
+        width: 100% !important;
+        max-width: 100% !important;
+        height: auto !important;
+        padding: 0 !important;
         position: relative;
         z-index: 50;
+        display: block !important;
     }
 
     .sidebar-header {
-        padding: 15px 20px;
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        padding: 15px 20px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        background-color: #1a237e !important;
     }
 
     /* Mostrar el botón hamburguesa */
@@ -220,65 +223,65 @@ canvas {
         display: block !important;
     }
 
-    /* Menú Desplegable (Oculto por defecto) */
+    /* Ocultar menú por defecto con fuerza bruta */
     .sidebar-nav {
-        display: none; 
-        flex-direction: column;
-        width: 100%;
-        background-color: #151b54; 
-        padding: 0;
+        display: none !important; 
+        flex-direction: column !important;
+        width: 100% !important;
+        background-color: #151b54 !important; 
+        padding: 0 !important;
+        box-sizing: border-box !important;
     }
 
-    /* Clase mágica activada por JS */
+    /* Mostrar menú al apretar el botón */
     .sidebar-nav.show-menu {
-        display: flex;
+        display: flex !important;
         animation: fadeIn 0.3s ease-in-out;
     }
 
-    /* Ocultar textos secundarios */
     .nav-section {
-        display: none;
+        display: none !important;
     }
 
-    /* Adaptar botones del menú al formato lista vertical */
     .sidebar-nav .nav-link {
-        border-left: none;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        border-radius: 0;
-        margin: 0;
-        padding: 15px 20px;
+        border-left: none !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+        border-radius: 0 !important;
+        margin: 0 !important;
+        padding: 15px 20px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        display: block !important;
     }
 
     .sidebar-nav .nav-link.active {
-        border-left: none;
-        background-color: rgba(26, 188, 156, 0.2); 
+        border-left: none !important;
+        background-color: rgba(26, 188, 156, 0.2) !important; 
     }
 
-    /* Contenido principal con espacio para respirar */
     .main-content {
-        width: 100%;
-        padding: 15px 10px;
-        overflow-x: hidden;
+        width: 100% !important;
+        padding: 15px 10px !important;
+        box-sizing: border-box !important;
+        overflow-x: hidden !important;
     }
 
-    /* Forzar a las cajas a no salirse de la pantalla */
     .chart-container, .dashboard-card, .formulario-grid, .chart-box {
         width: 100% !important;
         max-width: 100% !important;
-        box-sizing: border-box;
-        margin-left: 0;
-        margin-right: 0;
+        box-sizing: border-box !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
     }
 
-    /* Ajuste del botón primario */
     .btn-primario {
-        width: 100%;
-        margin-top: 10px;
-        text-align: center;
+        width: 100% !important;
+        margin-top: 10px !important;
+        text-align: center !important;
+        box-sizing: border-box !important;
     }
 }
 
-/* Animación de caída para el menú hamburguesa */
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(-10px); }
     to { opacity: 1; transform: translateY(0); }
