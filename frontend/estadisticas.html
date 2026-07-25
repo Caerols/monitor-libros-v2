@@ -33,24 +33,36 @@
                 <p>Análisis profundo y métricas de tu colección literaria.</p>
             </header>
             
-            <!-- GRID DE ESTADÍSTICAS (KPIs) -->
+            <!-- GRID DE ESTADÍSTICAS (KPIs) EXACTAMENTE 8 TARJETAS -->
             <div id="kpi-container" class="kpi-grid">
                 <!-- Tarjetas de Totales -->
-                <div class="kpi-card estado-verde">
+                <div class="kpi-card">
                     <h3>📚 Total de Libros</h3>
                     <p id="stat-total-libros">0</p>
                 </div>
-                <div class="kpi-card estado-amarillo">
+                <div class="kpi-card">
                     <h3>📄 Páginas Totales</h3>
                     <p id="stat-total-paginas">0</p>
                 </div>
-                <div class="kpi-card estado-amarillo">
-                    <h3>🖋️ Palabras (Estimado)</h3>
+                <div class="kpi-card">
+                    <h3>🖋️ Palabras Totales</h3>
                     <p id="stat-total-palabras">0</p>
                 </div>
                 <div class="kpi-card">
                     <h3>📏 Promedio por Libro</h3>
                     <p id="stat-promedio-paginas" style="font-size: 22px;">0 <span class="minimo" style="font-size: 14px;">págs</span></p>
+                </div>
+
+                <!-- Tarjetas de Progreso Real -->
+                <div class="kpi-card estado-verde">
+                    <h3>📖 Páginas Leídas</h3>
+                    <p id="stat-paginas-leidas">0</p>
+                    <div class="minimo">De libros finalizados</div>
+                </div>
+                <div class="kpi-card estado-verde">
+                    <h3>🧠 Palabras Leídas</h3>
+                    <p id="stat-palabras-leidas">0</p>
+                    <div class="minimo">De libros finalizados</div>
                 </div>
 
                 <!-- Tarjetas de Extremos -->
@@ -59,9 +71,9 @@
                     <p id="stat-mas-largo" style="font-size: 18px; font-weight: bold; margin-bottom: 5px; white-space: normal; color: #c62828;">-</p>
                     <div id="stat-largo-paginas" class="minimo">0 páginas</div>
                 </div>
-                <div class="kpi-card estado-verde">
+                <div class="kpi-card estado-amarillo">
                     <h3>💨 El Folleto (Más corto)</h3>
-                    <p id="stat-mas-corto" style="font-size: 18px; font-weight: bold; margin-bottom: 5px; white-space: normal; color: #2e7d32;">-</p>
+                    <p id="stat-mas-corto" style="font-size: 18px; font-weight: bold; margin-bottom: 5px; white-space: normal; color: #f57f17;">-</p>
                     <div id="stat-corto-paginas" class="minimo">0 páginas</div>
                 </div>
             </div>

@@ -10,6 +10,9 @@ document.addEventListener('DOMContentLoaded', () => {
         let totalPaginas = 0;
         let totalPalabras = 0;
         
+        let paginasLeidas = 0;
+        let palabrasLeidas = 0;
+        
         let libroMasLargo = null;
         let libroMasCorto = null;
 
@@ -17,9 +20,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const paginas = parseInt(libro.num_paginas) || 0;
             const palabras = parseInt(libro.palabras) || (paginas * 250); 
 
+            // Suma global
             totalPaginas += paginas;
             totalPalabras += palabras;
 
+            // Suma de lectura real (Solo si está finalizado)
+            if (libro.estado_lectura === "Finalizado") {
+                paginasLeidas += paginas;
+                palabrasLeidas += palabras;
+            }
+
+            // Encontrar extremos
             if (paginas > 0) {
                 if (!libroMasLargo || paginas > libroMasLargo.num_paginas) {
                     libroMasLargo = libro;
@@ -32,11 +43,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const promedioPaginas = totalLibros > 0 ? Math.round(totalPaginas / totalLibros) : 0;
 
+        // Inyectar Totales
         document.getElementById('stat-total-libros').innerText = totalLibros.toLocaleString('es-CL');
         document.getElementById('stat-total-paginas').innerText = totalPaginas.toLocaleString('es-CL');
         document.getElementById('stat-total-palabras').innerText = totalPalabras.toLocaleString('es-CL');
         document.getElementById('stat-promedio-paginas').innerHTML = `${promedioPaginas.toLocaleString('es-CL')} <span class="minimo" style="font-size: 14px;">págs</span>`;
 
+        // Inyectar Progreso Leído
+        document.getElementById('stat-paginas-leidas').innerText = paginasLeidas.toLocaleString('es-CL');
+        document.getElementById('stat-palabras-leidas').innerText = palabrasLeidas.toLocaleString('es-CL');
+
+        // Inyectar Extremos
         if (libroMasLargo) {
             document.getElementById('stat-mas-largo').innerText = libroMasLargo.titulo;
             document.getElementById('stat-largo-paginas').innerText = `${libroMasLargo.num_paginas} páginas`;
