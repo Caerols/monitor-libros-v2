@@ -33,12 +33,70 @@
                 <p>Hitos, medallas y gamificación de tus hábitos de lectura.</p>
             </header>
             
-            <!-- Contenedor temporal para la Fase 4 -->
-            <div style="background: white; padding: 40px; border-radius: 12px; text-align: center; margin-top: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
-                <h2 style="color: #f57f17;">🔒 Vitrina Sellada</h2>
-                <p style="margin-top: 10px; color: #666;">Preparando los algoritmos de desbloqueo para tus logros.</p>
+            <!-- VITRINA DE LOGROS -->
+            <div class="logros-grid">
+                
+                <!-- 1. Iniciado -->
+                <div class="logro-card bloqueado" id="logro-iniciado">
+                    <div class="logro-icono">📖</div>
+                    <h3>Iniciado</h3>
+                    <p>Finaliza tu primer expediente (1 libro leído).</p>
+                    <div class="progreso-texto" id="progreso-iniciado">0 / 1</div>
+                </div>
+
+                <!-- 2. Devorador de Páginas -->
+                <div class="logro-card bloqueado" id="logro-devorador">
+                    <div class="logro-icono">📑</div>
+                    <h3>Devorador de Páginas</h3>
+                    <p>Alcanza las 10,000 páginas leídas en total.</p>
+                    <div class="progreso-texto" id="progreso-devorador">0 / 10.000</div>
+                </div>
+
+                <!-- 3. Erudito -->
+                <div class="logro-card bloqueado" id="logro-erudito">
+                    <div class="logro-icono">🧠</div>
+                    <h3>Erudito</h3>
+                    <p>Lee más de 1.000.000 de palabras.</p>
+                    <div class="progreso-texto" id="progreso-erudito">0 / 1.000.000</div>
+                </div>
+
+                <!-- 4. Diógenes Literario -->
+                <div class="logro-card bloqueado" id="logro-diogenes">
+                    <div class="logro-icono">📚</div>
+                    <h3>Diógenes Literario</h3>
+                    <p>Acumula 15 libros en estado "Pendiente".</p>
+                    <div class="progreso-texto" id="progreso-diogenes">0 / 15</div>
+                </div>
+
+                <!-- 5. Buscador de Oro -->
+                <div class="logro-card bloqueado" id="logro-oro">
+                    <div class="logro-icono">⭐</div>
+                    <h3>Buscador de Oro</h3>
+                    <p>Califica 5 libros distintos como Obra Maestra (5 estrellas).</p>
+                    <div class="progreso-texto" id="progreso-oro">0 / 5</div>
+                </div>
+
+                <!-- 6. Crítico Implacable -->
+                <div class="logro-card bloqueado" id="logro-critico">
+                    <div class="logro-icono">🔨</div>
+                    <h3>Crítico Implacable</h3>
+                    <p>Califica 3 libros con 1 o 2 estrellas.</p>
+                    <div class="progreso-texto" id="progreso-critico">0 / 3</div>
+                </div>
+
+                <!-- 7. Maratón -->
+                <div class="logro-card bloqueado" id="logro-maraton">
+                    <div class="logro-icono">🏃‍♂️</div>
+                    <h3>Maratón de Resistencia</h3>
+                    <p>Finaliza un libro de más de 800 páginas.</p>
+                    <div class="progreso-texto" id="progreso-maraton">Bloqueado</div>
+                </div>
+
             </div>
         </main>
     </div>
+
+    <!-- Script del Motor de Logros -->
+    <script src="js/logros.js"></script>
 </body>
 </html>
