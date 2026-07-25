@@ -12,7 +12,7 @@ body {
     background-color: #f0f2f5;
     color: #333;
     padding: 2rem; 
-    overflow-x: hidden; /* Evita cualquier scroll horizontal accidental */
+    overflow-x: hidden;
 }
 
 .dashboard-container {
@@ -22,7 +22,79 @@ body {
 }
 
 /* =====================================================================
-   2. CABECERA (HEADER)
+   2. ESTRUCTURA PRINCIPAL Y BARRA LATERAL (ESCRITORIO)
+   ===================================================================== */
+.app-layout {
+    display: flex;
+    min-height: 100vh;
+}
+
+.sidebar {
+    width: 250px;
+    background-color: #1a237e;
+    color: white;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-header {
+    padding: 20px;
+    background-color: #151b54;
+    text-align: center;
+}
+
+.sidebar-header h2 {
+    font-size: 1.5rem;
+    margin: 0;
+    color: white;
+}
+
+.sidebar-nav {
+    padding: 20px 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.nav-section {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: #8c9eff;
+    margin: 15px 20px 5px 20px;
+    letter-spacing: 1px;
+}
+
+.nav-link {
+    color: white;
+    text-decoration: none;
+    padding: 12px 20px;
+    display: block;
+    transition: background 0.3s;
+    border-left: 4px solid transparent;
+}
+
+.nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.nav-link.active {
+    background-color: rgba(255, 255, 255, 0.15);
+    border-left: 4px solid #1abc9c;
+}
+
+.main-content {
+    flex: 1;
+    padding: 2rem;
+    overflow-x: hidden;
+}
+
+/* Botón Hamburguesa (Oculto en PC) */
+.btn-menu-mobile {
+    display: none; 
+}
+
+/* =====================================================================
+   3. CABECERA (HEADER)
    ===================================================================== */
 header {
     text-align: center;
@@ -40,13 +112,8 @@ header p {
     margin-top: 0.5rem;
 }
 
-/* Botón Hamburguesa (Oculto en PC) */
-.btn-menu-mobile {
-    display: none; 
-}
-
 /* =====================================================================
-   3. COMPONENTES DE INTERFAZ (UI)
+   4. COMPONENTES DE INTERFAZ (UI)
    ===================================================================== */
 .panel-control {
     width: 100%;
@@ -94,7 +161,7 @@ canvas {
 }
 
 /* =====================================================================
-   4. TARJETAS DE KPIs (Dashboard)
+   5. TARJETAS DE KPIs (Dashboard)
    ===================================================================== */
 #kpi-container, .kpi-grid {
     display: grid !important;
@@ -160,12 +227,84 @@ canvas {
 .tendencia-baja { color: #28a745 !important; font-weight: bold; font-size: 26px; margin: 0; }
 .tendencia-alta { color: #dc3545 !important; font-weight: bold; font-size: 26px; margin: 0; }
 
+/* =====================================================================
+   6. SALÓN DE TROFEOS (LOGROS)
+   ===================================================================== */
+.logros-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.logro-card {
+    background: white;
+    border-radius: 12px;
+    padding: 25px 20px;
+    text-align: center;
+    border: 2px solid #e0e0e0;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+.logro-icono {
+    font-size: 50px;
+    margin-bottom: 10px;
+}
+
+.logro-card h3 {
+    color: #2b3a67;
+    margin-bottom: 8px;
+    font-size: 18px;
+}
+
+.logro-card p {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 15px;
+    flex-grow: 1;
+}
+
+.progreso-texto {
+    font-weight: bold;
+    font-size: 14px;
+    background-color: #f5f5f5;
+    padding: 5px 10px;
+    border-radius: 20px;
+    display: inline-block;
+    align-self: center;
+}
+
+/* Estado: Bloqueado (Gris y apagado) */
+.logro-card.bloqueado {
+    filter: grayscale(100%);
+    opacity: 0.6;
+}
+
+/* Estado: Desbloqueado (Dorado y brillante) */
+.logro-card:not(.bloqueado) {
+    border-color: #f1c40f;
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(241, 196, 15, 0.2);
+}
+.logro-card:not(.bloqueado) .progreso-texto {
+    background-color: #fff9e6;
+    color: #f39c12;
+}
+
+/* Animaciones Generales */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
 
 /* =====================================================================
-   5. MODO RESPONSIVO ABSOLUTO (Tablets y Smartphones)
+   7. MODO RESPONSIVO ABSOLUTO (Tablets y Smartphones)
    ===================================================================== */
 @media screen and (max-width: 768px) {
-    /* Forzar limpieza de márgenes y prevenir barra de scroll horizontal */
     body, html {
         padding: 0 !important;
         margin: 0 !important;
@@ -246,7 +385,7 @@ canvas {
         overflow-x: hidden !important;
     }
 
-    /* LA MAGIA ANTI-DESBORDAMIENTO: min-width: 0 fuerza a las cajas a encogerse */
+    /* ANTI-DESBORDAMIENTO */
     .dashboard-container, 
     .chart-container, 
     .dashboard-card, 
@@ -262,8 +401,8 @@ canvas {
         margin-right: 0 !important;
     }
 
-    /* Convertimos el Grid problemático en Flexbox seguro para móviles */
-    #kpi-container, .kpi-grid {
+    /* Grid a Flexbox para móviles */
+    #kpi-container, .kpi-grid, .logros-grid {
         display: flex !important;
         flex-direction: column !important;
         width: 100% !important;
@@ -271,7 +410,7 @@ canvas {
         gap: 10px !important;
     }
 
-    .kpi-card {
+    .kpi-card, .logro-card {
         width: 100% !important;
         max-width: 100% !important;
         min-width: 0 !important;
@@ -280,18 +419,16 @@ canvas {
         border-radius: 8px !important;
     }
 
-    /* Evitar que los textos empujen el ancho de la caja */
     .kpi-card h3 { 
         font-size: 13px !important; 
         margin-bottom: 5px !important; 
-        white-space: normal !important; /* Permite bajar de línea */
+        white-space: normal !important;
         word-wrap: break-word !important; 
     }
 
     .tendencia-baja, .tendencia-alta, .kpi-card p, .kpi-card .precio { font-size: 20px !important; }
     .kpi-card div, .kpi-card .minimo { font-size: 11px !important; }
 
-    /* Forzar gráficos HTML a ajustarse al celular */
     canvas {
         width: 100% !important;
         max-width: 100% !important;
@@ -304,11 +441,10 @@ canvas {
         text-align: center !important;
         box-sizing: border-box !important;
     }
+    
     /* =========================================================
        REPARACIÓN DEL MODAL DE EXPEDIENTE (SOLO MÓVILES)
        ========================================================= */
-    
-    /* 1. Romper la cuadrícula de 2 columnas y apilar en vertical */
     .formulario-grid {
         display: flex !important;
         flex-direction: column !important;
@@ -320,7 +456,6 @@ canvas {
         margin-bottom: 5px !important;
     }
     
-    /* 2. Ajustar los textos y campos para dedos y pantallas chicas */
     .form-grupo label {
         font-size: 14px !important;
         margin-bottom: 4px !important;
@@ -331,19 +466,17 @@ canvas {
     .form-grupo select, 
     .form-grupo textarea {
         width: 100% !important;
-        font-size: 16px !important; /* 16px previene el zoom automático molesto en iOS/Android */
-        padding: 12px !important; /* Cajas más altas para que sea fácil tocarlas */
+        font-size: 16px !important; 
+        padding: 12px !important; 
         box-sizing: border-box !important;
     }
     
-    /* 3. Aprovechar mejor el espacio de la pantalla para el cuadro blanco */
     #modal-ingreso > div {
         width: 95% !important;
         padding: 20px 15px !important;
         max-height: 90vh !important;
     }
     
-    /* 4. Ajustar el botón de "Autocompletar" para que no se desborde */
     .btn-magico {
         width: 100% !important;
         padding: 12px !important;
@@ -356,76 +489,4 @@ canvas {
         margin-left: 0 !important;
         margin-top: 5px !important;
     }
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-/* =====================================================================
-   7. SALÓN DE TROFEOS (LOGROS)
-   ===================================================================== */
-.logros-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 20px;
-    margin-top: 20px;
-}
-
-.logro-card {
-    background: white;
-    border-radius: 12px;
-    padding: 25px 20px;
-    text-align: center;
-    border: 2px solid #e0e0e0;
-    transition: all 0.3s ease;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-}
-
-.logro-icono {
-    font-size: 50px;
-    margin-bottom: 10px;
-}
-
-.logro-card h3 {
-    color: #2b3a67;
-    margin-bottom: 8px;
-    font-size: 18px;
-}
-
-.logro-card p {
-    font-size: 14px;
-    color: #666;
-    margin-bottom: 15px;
-    flex-grow: 1;
-}
-
-.progreso-texto {
-    font-weight: bold;
-    font-size: 14px;
-    background-color: #f5f5f5;
-    padding: 5px 10px;
-    border-radius: 20px;
-    display: inline-block;
-    align-self: center;
-}
-
-/* Estado: Bloqueado (Gris y apagado) */
-.logro-card.bloqueado {
-    filter: grayscale(100%);
-    opacity: 0.6;
-}
-
-/* Estado: Desbloqueado (Dorado y brillante) */
-.logro-card:not(.bloqueado) {
-    border-color: #f1c40f;
-    transform: translateY(-5px);
-    box-shadow: 0 10px 20px rgba(241, 196, 15, 0.2);
-}
-.logro-card:not(.bloqueado) .progreso-texto {
-    background-color: #fff9e6;
-    color: #f39c12;
 }
