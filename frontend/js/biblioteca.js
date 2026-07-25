@@ -1,3 +1,8 @@
+// =====================================================================
+// MEMORIA RAM DEL NAVEGADOR (Para poder editar libros sin recargar)
+// =====================================================================
+window.catalogoGlobal = []; 
+
 document.addEventListener("DOMContentLoaded", () => {
     // =====================================================================
     // 1. MOTOR DE RENDERIZADO DEL CATÁLOGO (FLIP CARDS)
@@ -5,13 +10,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const API_URL = 'https://bibliotecaria-bot.onrender.com/api/biblioteca/catalogo';
     const contenedorCatalogo = document.getElementById('catalogo-container');
 
-    // Formateador de dinero chileno
     const formatearDinero = (monto) => {
         if (!monto) return "No registrado";
         return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(monto);
     };
 
-    // Función para asignar colores a las medallas (badges) según el estado
     const obtenerClaseEstado = (estado) => {
         switch(estado) {
             case 'En lectura': return 'en-lectura';
@@ -22,7 +25,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     };
 
-    // Función para dibujar las estrellas
     const generarEstrellas = (calificacion) => {
         if (!calificacion) return "Sin calificar";
         return "⭐".repeat(calificacion);
@@ -37,16 +39,18 @@ document.addEventListener("DOMContentLoaded", () => {
         .then(data => {
             const catalogo = data.catalogo;
             
+            // ¡CLAVE! Guardamos los datos en la variable global para poder editarlos luego
+            window.catalogoGlobal = catalogo; 
+            
             if (!catalogo || catalogo.length === 0) {
                 contenedorCatalogo.innerHTML = `
                     <div style="grid-column: 1 / -1; text-align: center; padding: 40px; background: white; border-radius: 12px;">
                         <h3>🗂️ Tu biblioteca está vacía</h3>
-                        <p>Aún no has registrado ningún libro en tu colección personal.</p>
+                        <p>Aún no has registrado ningún expediente en tu colección personal.</p>
                     </div>`;
                 return;
             }
 
-            // Limpiar la tarjeta de prueba (mock)
             contenedorCatalogo.innerHTML = '';
 
             // Generar tarjetas dinámicamente
@@ -86,26 +90,18 @@ document.addEventListener("DOMContentLoaded", () => {
                                     <li><strong>Palabras:</strong> ${libro.palabras || Math.round((libro.num_paginas || 0) * 250)}</li>
                                 </ul>
                                 
-                                <div class="book-observaciones" style="margin-top: 15px; border-top: 1px dashed #ccc; padding-top: 10px;">
+                                <div class="book-observaciones" style="margin-top: 15px; border-top: 1px dashed #ccc; padding-top: 10px; margin-bottom: 10px;">
                                     <strong>Contexto / Epílogo:</strong><br>
                                     ${observaciones}
                                 </div>
 
-                                <!-- Botón para Editar -->
-                                <button class="btn-editar" onclick="prepararEdicion(${libro.id})" style="margin-top: 15px; width: 100%; padding: 8px; background-color: #ff9800; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
+                                <!-- Botones de Control de Expediente -->
+                                <button class="btn-editar" onclick="prepararEdicion(${libro.id})" style="margin-top: auto; width: 100%; padding: 8px; background-color: #ff9800; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
                                     ✏️ Editar Expediente
                                 </button>
-                            </div>
-                                
-                                <div class="book-finanzas">
-                                    💰 <strong>Tienda:</strong> ${libro.tienda || 'Desconocida'}<br>
-                                    💸 <strong>Precio:</strong> ${precioTexto}<br>
-                                    📅 <strong>Fecha:</strong> ${libro.fecha_compra || 'No registrada'}
-                                </div>
-
-                                <div class="book-observaciones">
-                                    ${observaciones}
-                                </div>
+                                <button class="btn-eliminar" onclick="eliminarLibro(${libro.id})" style="margin-top: 5px; width: 100%; padding: 8px; background-color: #d32f2f; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
+                                    🗑️ Eliminar Archivo
+                                </button>
                             </div>
 
                         </div>
@@ -125,28 +121,11 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
     // =====================================================================
-    // 2. LÓGICA DEL MODAL Y AUTOCOMPLETADO MÁGICO (GOOGLE BOOKS API)
+    // 2. LÓGICA DEL AUTOCOMPLETADO MÁGICO (OPENLIBRARY)
     // =====================================================================
-    const modal = document.getElementById('modal-libro');
-    const btnAbrir = document.getElementById('btn-abrir-modal');
-    const btnCerrar = document.getElementById('btn-cerrar-modal');
     const btnAutocompletar = document.getElementById('btn-autocompletar');
     const mensajeInvestigacion = document.getElementById('mensaje-investigacion');
 
-    // Manejo de apertura y cierre del Modal
-    if (btnAbrir && modal && btnCerrar) {
-        btnAbrir.onclick = () => modal.style.display = "block";
-        btnCerrar.onclick = () => modal.style.display = "none";
-        
-        // Cerrar modal si el usuario hace clic fuera de la caja blanca
-        window.onclick = (event) => { 
-            if (event.target === modal) {
-                modal.style.display = "none"; 
-            }
-        };
-    }
-
-// Evento de la Bibliotecaria investigando directamente desde el navegador (Bypass Render)
     if (btnAutocompletar) {
         btnAutocompletar.addEventListener('click', async () => {
             const titulo = document.getElementById('form-titulo').value.trim();
@@ -159,43 +138,36 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             mensajeInvestigacion.style.color = "#1565c0"; 
-            mensajeInvestigacion.innerText = "🔍 Interceptando señal de Google Books... espera.";
+            mensajeInvestigacion.innerText = "🔍 Interceptando señal de archivos libres... espera.";
             btnAutocompletar.disabled = true;
             btnAutocompletar.style.opacity = "0.7";
 
             try {
-                // BYPASS v3: OpenLibrary con Escaneo Profundo de Metadatos
                 const urlOpenLibrary = `https://openlibrary.org/search.json?title=${encodeURIComponent(titulo)}&author=${encodeURIComponent(autor)}`;
-                
                 const response = await fetch(urlOpenLibrary);
                 if (!response.ok) throw new Error("OpenLibrary rechazó la conexión.");
                 
                 const data = await response.json();
 
                 if (data.docs && data.docs.length > 0) {
-                    // Variables vacías para irlas llenando con lo mejor que encontremos
                     let paginas = "";
                     let editorial = "";
                     let isbnLimpio = "";
                     let anio = data.docs[0].first_publish_year || "";
 
-                    // Escaneo profundo: Revisamos los 10 primeros resultados buscando los datos que faltan
                     for (let i = 0; i < Math.min(data.docs.length, 10); i++) {
                         const info = data.docs[i];
                         if (!paginas && info.number_of_pages_median) paginas = info.number_of_pages_median;
                         if (!editorial && info.publisher) editorial = info.publisher[0];
                         if (!isbnLimpio && info.isbn) isbnLimpio = info.isbn[0];
-                        
-                        // Si ya completamos todo, detenemos el escáner para ahorrar memoria
                         if (paginas && editorial && isbnLimpio) break;
                     }
 
-                    // Rellenar el formulario con los datos fusionados
                     document.getElementById('form-editorial').value = editorial || "Desconocida";
                     document.getElementById('form-anio').value = anio;
                     document.getElementById('form-paginas').value = paginas;
                     document.getElementById('form-palabras').value = paginas ? Math.round(paginas * 250) : "";
-                    document.getElementById('form-isbn').value = isbnLimpio || "N/A";
+                    document.getElementById('form-isbn').value = isbnLimpio || "";
                     document.getElementById('form-resumen').value = "Resumen no disponible en la base de datos libre. (Añadir nota manual aquí).";
                     
                     mensajeInvestigacion.style.color = "#2e7d32"; 
@@ -214,6 +186,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     }
+
     // =====================================================================
     // 3. MOTOR DE CÁLCULO AUTOMÁTICO DE PALABRAS
     // =====================================================================
@@ -224,29 +197,33 @@ document.addEventListener("DOMContentLoaded", () => {
         inputPaginas.addEventListener('input', (e) => {
             const paginas = parseInt(e.target.value);
             if (!isNaN(paginas) && paginas > 0) {
-                inputPalabras.value = paginas * 250; // Estándar editorial
+                inputPalabras.value = paginas * 250; 
             } else {
                 inputPalabras.value = "";
             }
         });
     }
+
     // =====================================================================
-    // 4. LÓGICA DE GUARDADO EN LA BASE DE DATOS
+    // 4. LÓGICA DE GUARDADO EN LA BASE DE DATOS (CREATE & UPDATE)
     // =====================================================================
     const btnGuardar = document.getElementById('btn-guardar-libro');
     
     if (btnGuardar) {
         btnGuardar.addEventListener('click', async () => {
-            // Recopilamos los datos del formulario
+            const idValue = document.getElementById('form-id').value;
+            
             const libroData = {
+                // ¡CLAVE! Si hay un ID en el formulario oculto, lo enviamos (Edición). Si no, va como null (Nuevo).
+                id: idValue ? parseInt(idValue) : null, 
                 titulo: document.getElementById('form-titulo').value.trim(),
                 autor: document.getElementById('form-autor').value.trim(),
                 genero: document.getElementById('form-genero').value.trim(),
                 anio_publicacion: document.getElementById('form-anio').value,
-                isbn: document.getElementById('form-isbn').value.trim(), // ¡Dato agregado!
+                isbn: document.getElementById('form-isbn').value.trim(), 
                 editorial: document.getElementById('form-editorial').value.trim(),
-                num_paginas: document.getElementById('form-paginas').value,
-                palabras: document.getElementById('form-palabras').value,
+                num_paginas: document.getElementById('form-paginas').value ? parseInt(document.getElementById('form-paginas').value) : 0,
+                palabras: document.getElementById('form-palabras').value ? parseInt(document.getElementById('form-palabras').value) : 0,
                 observaciones: document.getElementById('form-resumen').value.trim(),
                 estado_lectura: "No iniciado", 
                 calificacion: 0
@@ -261,7 +238,6 @@ document.addEventListener("DOMContentLoaded", () => {
             btnGuardar.disabled = true;
 
             try {
-                // Aquí enviaremos los datos a tu servidor Python (FastAPI)
                 const response = await fetch('https://bibliotecaria-bot.onrender.com/api/biblioteca/guardar', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -270,19 +246,78 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 const result = await response.json();
 
-                if (response.ok) {
-                    alert("✅ ¡Expediente guardado con éxito en la Matriz!");
-                    location.reload(); // Recarga para ver la nueva tarjeta
+                if (response.ok && result.exito) {
+                    alert("✅ ¡Expediente procesado con éxito en la Matriz!");
+                    location.reload(); 
                 } else {
-                    alert("❌ Error de la matriz: " + result.detail);
+                    // Muestra la alerta si es un duplicado o error del servidor
+                    alert("❌ Rechazado por la Matriz: " + result.detail);
                 }
             } catch (error) {
                 console.error("Error al guardar:", error);
                 alert("⚠️ No se pudo conectar con los servidores centrales.");
             } finally {
-                btnGuardar.innerText = "💾 Guardar Expediente en la Matriz";
+                btnGuardar.innerText = "💾 Guardar Expediente";
                 btnGuardar.disabled = false;
             }
         });
     }
 });
+
+// =====================================================================
+// 5. MOTORES DE EDICIÓN Y ELIMINACIÓN (Globales)
+// =====================================================================
+
+window.prepararEdicion = function(id) {
+    // 1. Buscamos el libro en la memoria global
+    const libro = window.catalogoGlobal.find(l => l.id === id);
+    if (!libro) {
+        alert("⚠️ No se encontró el expediente en la memoria.");
+        return;
+    }
+    
+    // 2. Rellenamos el formulario con los datos existentes
+    document.getElementById('form-id').value = libro.id;
+    document.getElementById('form-titulo').value = libro.titulo || '';
+    document.getElementById('form-autor').value = libro.autor || '';
+    document.getElementById('form-genero').value = libro.genero !== 'Sin clasificar' ? libro.genero : '';
+    document.getElementById('form-anio').value = libro.anio_publicacion || '';
+    document.getElementById('form-editorial').value = libro.editorial || '';
+    document.getElementById('form-paginas').value = libro.num_paginas || '';
+    document.getElementById('form-palabras').value = libro.palabras || '';
+    document.getElementById('form-isbn').value = libro.isbn || '';
+    document.getElementById('form-resumen').value = libro.observaciones || '';
+    
+    // 3. Cambiamos el texto del botón
+    document.getElementById('btn-guardar-libro').innerText = "🔄 Actualizar Expediente";
+    
+    // 4. Abrimos el modal
+    const modal = document.getElementById('modal-ingreso');
+    if (modal) {
+        modal.style.display = "flex";
+    } else {
+        alert("⚠️ Error: El contenedor del formulario no existe. Verifica que su ID sea 'modal-ingreso' en el HTML.");
+    }
+};
+
+window.eliminarLibro = async function(id) {
+    if (!confirm("⚠️ ¿Estás seguro de que deseas eliminar este expediente de la Matriz? Esta acción es irreversible.")) return;
+    
+    try {
+        const response = await fetch(`https://bibliotecaria-bot.onrender.com/api/biblioteca/eliminar/${id}`, { 
+            method: 'DELETE' 
+        });
+        
+        const result = await response.json();
+
+        if (response.ok && result.exito) {
+            alert("🗑️ Expediente eliminado correctamente.");
+            location.reload();
+        } else {
+            alert("❌ Fallo al intentar eliminar el archivo: " + result.detail);
+        }
+    } catch (e) {
+        console.error("Error eliminando:", e);
+        alert("⚠️ No se pudo conectar con el servidor para eliminar.");
+    }
+};

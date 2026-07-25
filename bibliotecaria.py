@@ -22,6 +22,7 @@ load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 
 class ExpedienteLibro(BaseModel):
+    id: Optional[int] = None
     titulo: str
     autor: str
     genero: Optional[str] = ""
@@ -226,20 +227,41 @@ class BotDatabaseOperations:
 
     @staticmethod
     def guardar_expediente(libro: ExpedienteLibro):
-        """Maneja la inserción del libro optimizando la apertura/cierre de cursores."""
         with DatabasePool.get_connection() as conn:
             with conn.cursor() as cur:
-                insert_sql = """
-                INSERT INTO biblioteca_personal 
-                (titulo, autor, genero, anio_publicacion, editorial, num_paginas, palabras, isbn, observaciones, estado_lectura, calificacion) 
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                """
-                valores = (
-                    libro.titulo, libro.autor, libro.genero, libro.anio_publicacion, 
-                    libro.editorial, libro.num_paginas, libro.palabras, libro.isbn, 
-                    libro.observaciones, libro.estado_lectura, libro.calificacion
-                )
-                cur.execute(insert_sql, valores)
+                if libro.id:
+                    # MODO EDICIÓN: Actualizamos el registro existente
+                    update_sql = """
+                    UPDATE biblioteca_personal 
+                    SET titulo=%s, autor=%s, genero=%s, anio_publicacion=%s, editorial=%s, 
+                        num_paginas=%s, palabras=%s, isbn=%s, observaciones=%s
+                    WHERE id=%s
+                    """
+                    cur.execute(update_sql, (libro.titulo, libro.autor, libro.genero, libro.anio_publicacion, 
+                                             libro.editorial, libro.num_paginas, libro.palabras, libro.isbn, 
+                                             libro.observaciones, libro.id))
+                else:
+                    # MODO NUEVO: Bloqueamos duplicados por Título y Autor
+                    cur.execute("SELECT id FROM biblioteca_personal WHERE titulo ILIKE %s AND autor ILIKE %s", (libro.titulo, libro.autor))
+                    if cur.fetchone():
+                        raise ValueError("Este libro ya existe en los archivos de la Matriz.")
+
+                    # Insertamos si pasó la prueba de duplicados
+                    insert_sql = """
+                    INSERT INTO biblioteca_personal 
+                    (titulo, autor, genero, anio_publicacion, editorial, num_paginas, palabras, isbn, observaciones, estado_lectura, calificacion) 
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    """
+                    cur.execute(insert_sql, (libro.titulo, libro.autor, libro.genero, libro.anio_publicacion, 
+                                             libro.editorial, libro.num_paginas, libro.palabras, libro.isbn, 
+                                             libro.observaciones, libro.estado_lectura, libro.calificacion))
+            conn.commit()
+
+    @staticmethod
+    def eliminar_expediente(id_libro: int):
+        with DatabasePool.get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("DELETE FROM biblioteca_personal WHERE id = %s", (id_libro,))
             conn.commit()
 
 # =====================================================================
@@ -275,13 +297,23 @@ def obtener_historial():
 
 @app.post("/api/biblioteca/guardar")
 def guardar_libro_api(libro: ExpedienteLibro):
-    """Endpoint limpio (Controller). La lógica de datos se movió a la DAL."""
     try:
         BotDatabaseOperations.guardar_expediente(libro)
-        return {"exito": True, "mensaje": "Expediente guardado exitosamente"}
+        return {"exito": True, "mensaje": "Expediente procesado exitosamente"}
+    except ValueError as ve:
+        # Aquí capturamos si intentaste guardar un duplicado
+        return {"exito": False, "detail": str(ve)}
     except Exception as e:
         print(f"Error persistiendo libro: {e}")
         return {"exito": False, "detail": "Error interno en la base de datos."}
+
+@app.delete("/api/biblioteca/eliminar/{id_libro}")
+def eliminar_libro_api(id_libro: int):
+    try:
+        BotDatabaseOperations.eliminar_expediente(id_libro)
+        return {"exito": True}
+    except Exception as e:
+        return {"exito": False, "detail": str(e)}
 
 async def start_api():
     port = int(os.getenv("PORT", 8080))

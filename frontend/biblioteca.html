@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mi Biblioteca Personal | Matriz Central</title>
-    <!-- Reutilizamos tu estilo base y agregamos el específico de la biblioteca -->
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/biblioteca.css">
 </head>
@@ -33,18 +32,27 @@
                 <h1>📚 Catálogo de Libros</h1>
                 <p>Tu colección personal. Pasa el ratón sobre un libro para ver sus detalles.</p>
             </header>
-            <!-- BOTÓN PARA AGREGAR LIBRO -->
+            
+            <!-- BOTÓN PARA AGREGAR LIBRO (Abre el Modal) -->
             <div style="margin-bottom: 20px; text-align: right;">
-                <button id="btn-abrir-modal" class="btn-primario">+ Ingresar Nuevo Expediente</button>
+                <button class="btn-primario" onclick="document.getElementById('form-id').value=''; document.getElementById('form-titulo').value=''; document.getElementById('form-autor').value=''; document.getElementById('form-genero').value=''; document.getElementById('form-anio').value=''; document.getElementById('form-isbn').value=''; document.getElementById('form-editorial').value=''; document.getElementById('form-paginas').value=''; document.getElementById('form-palabras').value=''; document.getElementById('form-resumen').value=''; document.getElementById('btn-guardar-libro').innerText='💾 Guardar Expediente en la Matriz'; document.getElementById('modal-ingreso').style.display='flex';">+ Ingresar Nuevo Expediente</button>
             </div>
 
-            <!-- MODAL DE INGRESO (Oculto por defecto) -->
-            <div class="formulario-grid">
+            <!-- MODAL DE INGRESO / EDICIÓN (Oculto por defecto, capa flotante) -->
+            <div id="modal-ingreso" style="display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,15,0.8); justify-content: center; align-items: center;">
+                <div style="background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 650px; max-height: 90vh; overflow-y: auto; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                    
+                    <!-- Botón Cerrar (X) -->
+                    <span onclick="document.getElementById('modal-ingreso').style.display='none';" style="position: absolute; right: 20px; top: 15px; cursor: pointer; font-size: 28px; font-weight: bold; color: #333;">&times;</span>
+                    
+                    <h2 style="margin-top: 0; color: #1a237e;">📝 Ingresar / Editar Expediente</h2>
+                    
+                    <div class="formulario-grid">
                         <!-- Datos Básicos -->
                         <div class="form-grupo">
                             <label>Título del libro *</label>
                             <input type="text" id="form-titulo" placeholder="Ej: La metamorfosis">
-                            <input type="hidden" id="form-id"> <!-- Oculto, servirá para editar después -->
+                            <input type="hidden" id="form-id"> <!-- Oculto, ID para base de datos -->
                         </div>
                         <div class="form-grupo">
                             <label>Autor *</label>
@@ -80,7 +88,7 @@
                         </div>
                         <div class="form-grupo">
                             <label>Palabras (Estimado)</label>
-                            <input type="number" id="form-palabras" readonly style="background-color: #f5f5f5;">
+                            <input type="number" id="form-palabras" readonly style="background-color: #f5f5f5; cursor: not-allowed;">
                         </div>
                         
                         <!-- Resumen / Contexto -->
@@ -94,59 +102,17 @@
                             <button id="btn-guardar-libro" class="btn-primario" style="width: 100%; font-size: 16px; padding: 12px; background: #2e7d32;">💾 Guardar Expediente en la Matriz</button>
                         </div>
                     </div>
-
-            <!-- CUADRÍCULA DEL CATÁLOGO -->
-            <section class="catalogo-grid" id="catalogo-container">
-                
-                <!-- EJEMPLO DE TARJETA 3D (FLIP CARD) -->
-                <div class="book-card">
-                    <div class="book-card-inner">
-                        
-                        <!-- FRENTE DE LA TARJETA -->
-                        <div class="book-card-front">
-                            <div class="portada-placeholder">
-                                <!-- Aquí irá la imagen de portada. Por ahora usamos un placeholder -->
-                                <span>El Archivo de las Tormentas</span>
-                            </div>
-                            <div class="book-info-front">
-                                <h3>El Camino de los Reyes</h3>
-                                <p class="autor">Brandon Sanderson</p>
-                                <div class="book-badges">
-                                    <span class="badge badge-estado en-lectura">En Lectura (45%)</span>
-                                    <span class="badge badge-rating">⭐⭐⭐⭐⭐</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- REVERSO DE LA TARJETA -->
-                        <div class="book-card-back">
-                            <h3>Detalles Técnicos</h3>
-                            <ul class="book-details-list">
-                                <li><strong>Género:</strong> Fantasía Épica</li>
-                                <li><strong>Editorial:</strong> Nova</li>
-                                <li><strong>Páginas:</strong> 1200</li>
-                                <li><strong>ISBN:</strong> 9788466657662</li>
-                                <li><strong>Formato:</strong> Físico Nuevo</li>
-                            </ul>
-                            
-                            <div class="book-finanzas">
-                                💰 <strong>Comprado en:</strong> Buscalibre<br>
-                                💸 <strong>Precio pagado:</strong> $24.990<br>
-                                📅 <strong>Fecha:</strong> 15-Mar-2025
-                            </div>
-
-                            <div class="book-observaciones">
-                                <em>"Primer libro del Cosmere que leo. Excelente construcción de mundo."</em>
-                            </div>
-                        </div>
-
-                    </div>
                 </div>
-                <!-- FIN EJEMPLO TARJETA -->
+            </div>
 
+            <!-- CUADRÍCULA DEL CATÁLOGO (Vacía, JS inyectará las tarjetas aquí) -->
+            <section class="catalogo-grid" id="catalogo-container">
+                <!-- Se dibuja dinámicamente -->
             </section>
         </main>
     </div>
-    <script src="js/biblioteca.js"></script>
+    
+    <!-- Rompedor de Caché integrado para evitar cargar JS antiguos -->
+    <script src="js/biblioteca.js?v=3"></script>
 </body>
 </html>
