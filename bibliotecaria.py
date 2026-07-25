@@ -2,8 +2,6 @@ import os
 import discord
 import asyncio
 import json
-import urllib.request
-import urllib.parse
 from discord.ext import commands
 from dotenv import load_dotenv
 from fastapi import FastAPI
@@ -192,47 +190,7 @@ class BotDatabaseOperations:
                 cursor.execute(query)
                 return cursor.fetchall()
             
-    @staticmethod
-    def buscar_info_libro(titulo: str, autor: str):
-        """Consulta Google Books usando librerías nativas para evitar errores en Render."""
-        query = f"{titulo} {autor}"
-        q_encoded = urllib.parse.quote(query) # Codifica los espacios y tildes perfecto
-        url = f"https://www.googleapis.com/books/v1/volumes?q={q_encoded}&maxResults=1&langRestrict=es"
-        
-        try:
-            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-            with urllib.request.urlopen(req, timeout=10) as response:
-                data = json.loads(response.read().decode('utf-8'))
-            
-            if 'items' not in data:
-                return {"error": "Google Books no tiene registros para este libro."}
-            
-            info = data['items'][0]['volumeInfo']
-            paginas = info.get('pageCount', 0)
-            
-            isbn_limpio = 'N/A'
-            identificadores = info.get('industryIdentifiers', [])
-            for id_obj in identificadores:
-                if id_obj.get('type') == 'ISBN_13':
-                    isbn_limpio = id_obj.get('identifier')
-                    break
-            if isbn_limpio == 'N/A' and identificadores:
-                isbn_limpio = identificadores[0].get('identifier', 'N/A')
-            
-            return {
-                "titulo": info.get('title', titulo),
-                "editorial": info.get('publisher', 'Desconocido'),
-                "anio": str(info.get('publishedDate', '0000'))[:4],
-                "paginas": paginas,
-                "palabras": paginas * 250,
-                "resumen": info.get('description', 'Sin resumen disponible.'),
-                "isbn": isbn_limpio
-            }
-        except Exception as e:
-            # Ahora, si falla, capturamos el error exacto para verlo en el HTML
-            return {"error": f"Fallo interno en servidor Python: {str(e)}"}
-
-# =====================================================================
+   # =====================================================================
 # SISTEMA DE SOPORTE VITAL Y API CENTRAL (FastAPI)
 # =====================================================================
 app = FastAPI(title="Matriz Central: Bot & API")
@@ -257,20 +215,6 @@ def obtener_catalogo_api():
         return {"catalogo": datos}
     except Exception as e:
         return {"error": str(e)}
-
-@app.get("/api/biblioteca/investigar")
-def investigar_libro_api(titulo: str, autor: str):
-    """Endpoint que envía la info, o el error REAL al frontend"""
-    try:
-        datos = BotDatabaseOperations.buscar_info_libro(titulo, autor)
-        
-        # Revisamos si la función nos devolvió un mensaje de error
-        if "error" in datos:
-            return {"exito": False, "error": datos["error"]}
-            
-        return {"exito": True, "datos": datos}
-    except Exception as e:
-        return {"exito": False, "error": f"Error fatal en endpoint: {str(e)}"}
 
 @app.get("/api/historial")
 def obtener_historial():
