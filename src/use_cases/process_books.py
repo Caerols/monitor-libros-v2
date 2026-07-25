@@ -77,7 +77,9 @@ class GeneradorAlertasBuscalibre:
         Evalúa si la presa merece una flecha (notificación) basándose en su historial.
         Retorna un diccionario con la alerta formateada o None si es spam.
         """
-        precio_actual = libro.precio
+        # ¡AQUÍ ESTABA EL ERROR! (Cambiado de libro.precio a libro.precio_actual)
+        precio_actual = libro.precio_actual
+        
         precio_anterior = stats.get('precio_anterior')
         precio_maximo = stats.get('precio_maximo', precio_actual)
         precio_minimo = stats.get('precio_minimo', precio_actual)
