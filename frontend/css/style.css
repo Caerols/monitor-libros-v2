@@ -1,18 +1,44 @@
 /* =====================================================================
-   1. ESTILOS BASE Y RESET
+   1. VARIABLES Y ESTILOS BASE (LA MATRIZ PROFUNDA)
    ===================================================================== */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+
+:root {
+    /* Paleta de la Matriz */
+    --bg-abismo: #0b1120;       /* Fondo principal ultra oscuro */
+    --bg-panel: #0f172a;        /* Fondo de la barra lateral */
+    --bg-tarjeta: #1e293b;      /* Fondo de las tarjetas (cristal ahumado) */
+    --bg-input: #334155;        /* Fondo de los formularios */
+    
+    /* Textos */
+    --texto-brillante: #f8fafc; /* Títulos y números principales */
+    --texto-base: #cbd5e1;      /* Párrafos normales */
+    --texto-mutado: #94a3b8;    /* Subtítulos y detalles */
+    
+    /* Acentos Neón (Cian, Verde, Rojo, Ámbar) */
+    --neon-cyan: #06b6d4;
+    --neon-azul: #3b82f6;
+    --neon-verde: #10b981;
+    --neon-rojo: #ef4444;
+    --neon-ambar: #f59e0b;
+
+    /* Bordes sutiles */
+    --borde-fino: #334155;
+}
+
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Inter', Tahoma, sans-serif; /* Tipografía limpia y moderna */
 }
 
 body {
-    background-color: #f0f2f5;
-    color: #333;
+    background-color: var(--bg-abismo);
+    color: var(--texto-base);
     padding: 2rem; 
     overflow-x: hidden;
+    transition: background-color 0.3s ease;
 }
 
 .dashboard-container {
@@ -22,7 +48,7 @@ body {
 }
 
 /* =====================================================================
-   2. ESTRUCTURA PRINCIPAL Y BARRA LATERAL (ESCRITORIO)
+   2. ESTRUCTURA PRINCIPAL Y BARRA LATERAL
    ===================================================================== */
 .app-layout {
     display: flex;
@@ -31,23 +57,28 @@ body {
 
 .sidebar {
     width: 250px;
-    background-color: #1a237e;
-    color: white;
+    background-color: var(--bg-panel);
+    color: var(--texto-base);
     flex-shrink: 0;
     display: flex;
     flex-direction: column;
+    border-right: 1px solid var(--borde-fino);
+    box-shadow: 4px 0 15px rgba(0,0,0,0.2);
 }
 
 .sidebar-header {
     padding: 20px;
-    background-color: #151b54;
+    background-color: transparent;
     text-align: center;
+    border-bottom: 1px solid var(--borde-fino);
 }
 
 .sidebar-header h2 {
     font-size: 1.5rem;
     margin: 0;
-    color: white;
+    color: var(--texto-brillante);
+    font-weight: 700;
+    letter-spacing: 0.5px;
 }
 
 .sidebar-nav {
@@ -59,27 +90,30 @@ body {
 .nav-section {
     font-size: 0.75rem;
     text-transform: uppercase;
-    color: #8c9eff;
+    color: var(--texto-mutado);
     margin: 15px 20px 5px 20px;
     letter-spacing: 1px;
+    font-weight: 600;
 }
 
 .nav-link {
-    color: white;
+    color: var(--texto-base);
     text-decoration: none;
     padding: 12px 20px;
     display: block;
-    transition: background 0.3s;
+    transition: all 0.3s ease;
     border-left: 4px solid transparent;
 }
 
 .nav-link:hover {
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: rgba(255, 255, 255, 0.05);
+    color: var(--texto-brillante);
 }
 
 .nav-link.active {
-    background-color: rgba(255, 255, 255, 0.15);
-    border-left: 4px solid #1abc9c;
+    background-color: rgba(6, 182, 212, 0.1); /* Brillo cyan al fondo */
+    border-left: 4px solid var(--neon-cyan);
+    color: var(--neon-cyan);
 }
 
 .main-content {
@@ -102,11 +136,13 @@ header {
 
 header h1 {
     font-size: 2.5rem;
-    color: #1a237e;
+    color: var(--texto-brillante);
+    font-weight: 700;
+    letter-spacing: -0.5px;
 }
 
 header p {
-    color: #5c6bc0;
+    color: var(--texto-mutado);
     font-size: 1.1rem;
     margin-top: 0.5rem;
 }
@@ -127,9 +163,17 @@ header p {
     padding: 12px;
     font-size: 16px;
     border-radius: 8px;
-    border: 2px solid #2b3a67;
-    background-color: white;
+    border: 1px solid var(--borde-fino);
+    background-color: var(--bg-input);
+    color: var(--texto-brillante);
     cursor: pointer;
+    outline: none;
+    transition: border 0.3s;
+}
+
+.panel-control select:focus,
+#filtroLibro:focus {
+    border-color: var(--neon-cyan);
 }
 
 .alerta {
@@ -140,8 +184,8 @@ header p {
     font-weight: 500;
     width: 100%;
 }
-.alerta.info { background-color: #e3f2fd; color: #1565c0; border: 1px solid #90caf9; }
-.alerta.warning { background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+.alerta.info { background-color: rgba(59, 130, 246, 0.1); color: var(--neon-azul); border: 1px solid rgba(59, 130, 246, 0.3); }
+.alerta.warning { background-color: rgba(245, 158, 11, 0.1); color: var(--neon-ambar); border: 1px solid rgba(245, 158, 11, 0.3); }
 .oculta { display: none; }
 
 .chart-grid {
@@ -150,12 +194,13 @@ header p {
 
 .chart-box {
     position: relative;
-    height: 350px; /* Volvemos a una altura decente y controlada */
+    height: 350px; 
     width: 100%;
     padding: 20px;
-    background: #ffffff;
+    background: var(--bg-tarjeta);
     border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,255,255,0.05); /* Reflejo sutil de cristal */
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
@@ -163,18 +208,19 @@ header p {
 
 .chart-box h3 {
     text-align: center;
-    color: #2b3a67;
+    color: var(--texto-brillante);
     margin-bottom: 20px;
-    font-size: 18px;
+    font-size: 16px;
+    font-weight: 600;
     width: 100%;
-    flex-shrink: 0; /* Evita que el título se aplaste */
+    flex-shrink: 0;
 }
 
 .chart-wrapper {
     position: relative;
     width: 100%;
     flex-grow: 1;
-    min-height: 0; /* EL SECRETO: Evita que el Canvas crezca infinitamente hacia abajo */
+    min-height: 0; 
     display: flex;
     justify-content: center;
     align-items: center;
@@ -195,27 +241,32 @@ canvas {
 }
 
 .kpi-card {
-    background: #ffffff;
+    background: var(--bg-tarjeta);
     padding: 20px;
     border-radius: 12px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    border: 1px solid rgba(255,255,255,0.02);
     text-align: center;
-    border-top: 5px solid #2b3a67;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    transition: transform 0.2s;
+    transition: transform 0.2s, box-shadow 0.2s;
     width: 100%;
+    /* Finísima línea luminosa arriba en vez del borde grueso */
+    border-top: 2px solid var(--borde-fino);
 }
 
 .kpi-card:hover {
     transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.4);
 }
 
 .kpi-card h3 { 
     margin: 0 0 10px 0; 
-    font-size: 15px; 
-    color: #666; 
+    font-size: 13px; 
+    color: var(--texto-mutado); 
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -223,131 +274,56 @@ canvas {
 
 .kpi-card p, .kpi-card .precio { 
     margin: 0; 
-    font-size: 26px; 
-    font-weight: bold; 
-    color: #222; 
+    font-size: 28px; 
+    font-weight: 700; 
+    color: var(--texto-brillante); 
 }
 
 .kpi-card .minimo {
     font-size: 0.85rem;
-    color: #888;
-    margin-top: 0.3rem;
+    color: var(--texto-mutado);
+    margin-top: 0.4rem;
 }
 
-.kpi-card .estado {
-    margin-top: 1rem;
-    font-size: 0.9rem;
-    font-weight: bold;
-    padding: 0.4rem 0;
-    border-radius: 6px;
-}
+/* Variantes visuales de las tarjetas con colores Neón */
+.estado-verde { border-top-color: var(--neon-verde); }
+.estado-amarillo { border-top-color: var(--neon-ambar); }
+.estado-rojo { border-top-color: var(--neon-rojo); }
 
-/* Variantes visuales de las tarjetas */
-.estado-verde { border-top-color: #4caf50; }
-.estado-verde .estado { background-color: #e8f5e9; color: #2e7d32; }
-.estado-amarillo { border-top-color: #ffc107; }
-.estado-amarillo .estado { background-color: #fff8e1; color: #f57f17; }
-.estado-rojo { border-top-color: #f44336; }
-.estado-rojo .estado { background-color: #ffebee; color: #c62828; }
+.tendencia-baja { color: var(--neon-verde) !important; font-weight: bold; font-size: 26px; margin: 0; }
+.tendencia-alta { color: var(--neon-rojo) !important; font-weight: bold; font-size: 26px; margin: 0; }
 
-.tendencia-baja { color: #28a745 !important; font-weight: bold; font-size: 26px; margin: 0; }
-.tendencia-alta { color: #dc3545 !important; font-weight: bold; font-size: 26px; margin: 0; }
-
-.kpi-promedio p { font-size: 22px; }
+.kpi-promedio p { font-size: 24px; }
 .kpi-promedio .minimo { font-size: 14px; }
 
 .kpi-titulo-extremo {
-    font-size: 18px !important;
-    font-weight: bold !important;
+    font-size: 16px !important;
+    font-weight: 600 !important;
     margin-bottom: 5px !important;
     white-space: normal !important;
 }
-.estado-rojo .kpi-titulo-extremo { color: #c62828 !important; }
-.estado-amarillo .kpi-titulo-extremo { color: #f57f17 !important; }
+.estado-rojo .kpi-titulo-extremo { color: var(--neon-rojo) !important; }
+.estado-amarillo .kpi-titulo-extremo { color: var(--neon-ambar) !important; }
 
 /* =====================================================================
-   6. SALÓN DE TROFEOS (LOGROS)
-   ===================================================================== */
-.logros-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 20px;
-    margin-top: 20px;
-}
-
-.logro-card {
-    background: white;
-    border-radius: 12px;
-    padding: 25px 20px;
-    text-align: center;
-    border: 2px solid #e0e0e0;
-    transition: all 0.3s ease;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-}
-
-.logro-icono {
-    font-size: 50px;
-    margin-bottom: 10px;
-}
-
-.logro-card h3 {
-    color: #2b3a67;
-    margin-bottom: 8px;
-    font-size: 18px;
-}
-
-.logro-card p {
-    font-size: 14px;
-    color: #666;
-    margin-bottom: 15px;
-    flex-grow: 1;
-}
-
-.progreso-texto {
-    font-weight: bold;
-    font-size: 14px;
-    background-color: #f5f5f5;
-    padding: 5px 10px;
-    border-radius: 20px;
-    display: inline-block;
-    align-self: center;
-}
-
-.logro-card.bloqueado {
-    filter: grayscale(100%);
-    opacity: 0.6;
-}
-
-.logro-card:not(.bloqueado) {
-    border-color: #f1c40f;
-    transform: translateY(-5px);
-    box-shadow: 0 10px 20px rgba(241, 196, 15, 0.2);
-}
-.logro-card:not(.bloqueado) .progreso-texto {
-    background-color: #fff9e6;
-    color: #f39c12;
-}
-
-/* =====================================================================
-   8. PANEL DE ADN LITERARIO (NUEVO)
+   8. PANEL DE ADN LITERARIO (MODO OSCURO)
    ===================================================================== */
 .adn-panel {
-    background: white;
+    background: var(--bg-tarjeta);
     border-radius: 12px;
     padding: 25px;
     margin-top: 25px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-    border-top: 5px solid #1a237e;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-top: 2px solid var(--neon-cyan);
 }
 
 .adn-panel h2 {
-    color: #2b3a67;
+    color: var(--texto-brillante);
     margin-bottom: 25px;
-    font-size: 20px;
+    font-size: 18px;
     text-align: center;
+    font-weight: 600;
 }
 
 .adn-grid {
@@ -361,51 +337,54 @@ canvas {
 .adn-card {
     flex: 1;
     min-width: 140px;
-    background: #f8f9fa;
+    background: rgba(255,255,255,0.03); /* Transparencia estilo Glass */
     padding: 15px;
     border-radius: 8px;
     display: flex;
     flex-direction: column;
     justify-content: center;
+    border: 1px solid var(--borde-fino);
 }
 
 .adn-card.reliquia {
-    background: #fff3cd;
-    border: 1px solid #ffeeba;
+    background: rgba(245, 158, 11, 0.05);
+    border: 1px solid rgba(245, 158, 11, 0.2);
 }
 
 .adn-card.contemporaneo {
-    background: #e3f2fd;
-    border: 1px solid #90caf9;
+    background: rgba(6, 182, 212, 0.05);
+    border: 1px solid rgba(6, 182, 212, 0.2);
 }
 
 .adn-icono {
-    font-size: 32px;
+    font-size: 28px; /* Ligeramente más pequeños para mayor elegancia */
     margin-bottom: 10px;
+    filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.5));
 }
 
 .adn-titulo {
-    font-size: 13px;
+    font-size: 12px;
     text-transform: uppercase;
     letter-spacing: 1px;
-    color: #666;
+    color: var(--texto-mutado);
     margin-bottom: 8px;
+    font-weight: 600;
 }
-.adn-card.reliquia .adn-titulo { color: #856404; }
-.adn-card.contemporaneo .adn-titulo { color: #1565c0; }
+.adn-card.reliquia .adn-titulo { color: var(--neon-ambar); }
+.adn-card.contemporaneo .adn-titulo { color: var(--neon-cyan); }
 
 .adn-valor {
     font-size: 16px;
-    font-weight: bold;
-    color: #222;
+    font-weight: 700;
+    color: var(--texto-brillante);
     white-space: normal;
 }
 
 .adn-subvalor {
     font-size: 13px;
-    color: #666;
+    color: var(--texto-mutado);
     margin-top: 5px;
-    font-weight: bold;
+    font-weight: 500;
 }
 
 @keyframes fadeIn {
@@ -439,6 +418,8 @@ canvas {
         position: relative;
         z-index: 50;
         display: block !important;
+        border-right: none;
+        border-bottom: 1px solid var(--borde-fino);
     }
 
     .sidebar-header {
@@ -448,18 +429,23 @@ canvas {
         padding: 15px 20px !important;
         width: 100% !important;
         box-sizing: border-box !important;
-        background-color: #1a237e !important;
+        background-color: var(--bg-panel) !important;
     }
 
     .btn-menu-mobile {
         display: block !important;
+        background: transparent;
+        color: var(--texto-brillante);
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
     }
 
     .sidebar-nav {
         display: none !important; 
         flex-direction: column !important;
         width: 100% !important;
-        background-color: #151b54 !important; 
+        background-color: var(--bg-abismo) !important; 
         padding: 0 !important;
         box-sizing: border-box !important;
     }
@@ -473,17 +459,13 @@ canvas {
 
     .sidebar-nav .nav-link {
         border-left: none !important;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+        border-bottom: 1px solid var(--borde-fino) !important;
         border-radius: 0 !important;
         margin: 0 !important;
         padding: 15px 20px !important;
         width: 100% !important;
         box-sizing: border-box !important;
         display: block !important;
-    }
-
-    .sidebar-nav .nav-link.active {
-        background-color: rgba(26, 188, 156, 0.2) !important; 
     }
 
     .main-content {
@@ -533,70 +515,16 @@ canvas {
     }
 
     .kpi-card h3 { 
-        font-size: 13px !important; 
+        font-size: 12px !important; 
         margin-bottom: 5px !important; 
-        white-space: normal !important;
-        word-wrap: break-word !important; 
     }
 
-    .tendencia-baja, .tendencia-alta, .kpi-card p, .kpi-card .precio { font-size: 20px !important; }
+    .tendencia-baja, .tendencia-alta, .kpi-card p, .kpi-card .precio { font-size: 22px !important; }
     .kpi-card div, .kpi-card .minimo { font-size: 11px !important; }
 
     canvas {
         width: 100% !important;
         max-width: 100% !important;
         height: auto !important;
-    }
-
-    .btn-primario {
-        width: 100% !important;
-        margin-top: 10px !important;
-        text-align: center !important;
-        box-sizing: border-box !important;
-    }
-    
-    .formulario-grid {
-        display: flex !important;
-        flex-direction: column !important;
-        gap: 12px !important;
-    }
-
-    .form-grupo {
-        width: 100% !important;
-        margin-bottom: 5px !important;
-    }
-    
-    .form-grupo label {
-        font-size: 14px !important;
-        margin-bottom: 4px !important;
-        display: block !important;
-    }
-
-    .form-grupo input, 
-    .form-grupo select, 
-    .form-grupo textarea {
-        width: 100% !important;
-        font-size: 16px !important; 
-        padding: 12px !important; 
-        box-sizing: border-box !important;
-    }
-    
-    #modal-ingreso > div {
-        width: 95% !important;
-        padding: 20px 15px !important;
-        max-height: 90vh !important;
-    }
-    
-    .btn-magico {
-        width: 100% !important;
-        padding: 12px !important;
-        font-size: 14px !important;
-        margin-bottom: 10px !important;
-    }
-    
-    #mensaje-investigacion {
-        display: block !important;
-        margin-left: 0 !important;
-        margin-top: 5px !important;
     }
 }
