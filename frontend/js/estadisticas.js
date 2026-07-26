@@ -142,7 +142,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // =========================================================
-    // 3. MOTOR DE GRÁFICOS (Chart.js)
+    // 3. MOTOR DE GRÁFICOS (Chart.js) - MATRIZ PROFUNDA
     // =========================================================
     function renderizarGraficos(libros) {
         if (!libros || libros.length === 0) return;
@@ -158,8 +158,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (conteoCalificaciones[calificacion] !== undefined) conteoCalificaciones[calificacion]++;
         });
 
-        Chart.defaults.font.family = "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
-        Chart.defaults.color = '#666';
+        // 1. Tipografía y color base adaptados a la oscuridad
+        Chart.defaults.font.family = "'Inter', Tahoma, Geneva, Verdana, sans-serif";
+        Chart.defaults.color = '#cbd5e1'; // Gris perla brillante para textos
 
         // --- DIBUJAR: Gráfico de Estados (Doughnut) ---
         const ctxEstados = document.getElementById('graficoEstados').getContext('2d');
@@ -174,9 +175,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         conteoEstados["Pendiente"], 
                         conteoEstados["No iniciado"]
                     ],
-                    backgroundColor: ['#4caf50', '#ff9800', '#f44336', '#9e9e9e'],
-                    borderWidth: 2,
-                    borderColor: '#ffffff'
+                    // Paleta de tonos Neón (Verde, Ámbar, Rojo, Gris Carbón)
+                    backgroundColor: ['#10b981', '#f59e0b', '#ef4444', '#334155'],
+                    borderWidth: 3,
+                    borderColor: '#1e293b' // Se camufla exacto con el fondo de la tarjeta
                 }]
             },
             options: {
@@ -185,7 +187,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 plugins: {
                     legend: { 
                         position: 'bottom',
-                        labels: { boxWidth: 12, padding: 10 }
+                        labels: { boxWidth: 12, padding: 10, color: '#cbd5e1' }
                     }
                 }
             }
@@ -196,7 +198,6 @@ document.addEventListener('DOMContentLoaded', () => {
         new Chart(ctxCalificaciones, {
             type: 'bar',
             data: {
-                // ARREGLO VISUAL: Etiquetas cortas para que ChartJS no las rote en diagonal
                 labels: ['5 ⭐', '4 ⭐', '3 ⭐', '2 ⭐', '1 ⭐', 'Sin nota'],
                 datasets: [{
                     label: 'Cantidad de Libros',
@@ -208,8 +209,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         conteoCalificaciones["1"],
                         conteoCalificaciones["0"]
                     ],
-                    backgroundColor: '#1abc9c',
-                    borderRadius: 4
+                    backgroundColor: '#06b6d4', // Cian eléctrico para resaltar brutal
+                    borderRadius: 6
                 }]
             },
             options: {
@@ -217,11 +218,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 maintainAspectRatio: false,
                 scales: {
                     x: {
-                        ticks: { autoSkip: false, maxRotation: 0, minRotation: 0 } // Forzamos texto 100% horizontal
+                        ticks: { autoSkip: false, maxRotation: 0, minRotation: 0, color: '#cbd5e1' },
+                        grid: { 
+                            color: 'rgba(255, 255, 255, 0.05)', // Cuadrícula casi invisible
+                        },
+                        border: { display: false } // Quita la línea gruesa del eje
                     },
                     y: { 
                         beginAtZero: true, 
-                        ticks: { stepSize: 1 } 
+                        ticks: { stepSize: 1, color: '#cbd5e1' },
+                        grid: { 
+                            color: 'rgba(255, 255, 255, 0.05)' 
+                        },
+                        border: { display: false }
                     }
                 },
                 plugins: {
