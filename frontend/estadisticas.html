@@ -47,9 +47,9 @@
                     <h3>🖋️ Palabras Totales</h3>
                     <p id="stat-total-palabras">0</p>
                 </div>
-                <div class="kpi-card">
+                <div class="kpi-card kpi-promedio">
                     <h3>📏 Promedio por Libro</h3>
-                    <p id="stat-promedio-paginas" style="font-size: 22px;">0 <span class="minimo" style="font-size: 14px;">págs</span></p>
+                    <p id="stat-promedio-paginas">0 <span class="minimo">págs</span></p>
                 </div>
 
                 <!-- Tarjetas de Progreso Real -->
@@ -67,29 +67,73 @@
                 <!-- Tarjetas de Extremos -->
                 <div class="kpi-card estado-rojo">
                     <h3>🧱 El Ladrillo (Más largo)</h3>
-                    <p id="stat-mas-largo" style="font-size: 18px; font-weight: bold; margin-bottom: 5px; white-space: normal; color: #c62828;">-</p>
+                    <p id="stat-mas-largo" class="kpi-titulo-extremo">-</p>
                     <div id="stat-largo-paginas" class="minimo">0 páginas</div>
                 </div>
                 <div class="kpi-card estado-amarillo">
                     <h3>💨 El Folleto (Más corto)</h3>
-                    <p id="stat-mas-corto" style="font-size: 18px; font-weight: bold; margin-bottom: 5px; white-space: normal; color: #f57f17;">-</p>
+                    <p id="stat-mas-corto" class="kpi-titulo-extremo">-</p>
                     <div id="stat-corto-paginas" class="minimo">0 páginas</div>
                 </div>
             </div>
 
             <!-- GRÁFICOS VISUALES (Chart.js) -->
-            <div class="kpi-grid" style="margin-top: 20px;">
-                <div class="chart-box" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                    <h3 style="text-align: center; color: #2b3a67; margin-bottom: 15px; font-size: 16px;">Distribución por Estado</h3>
-                    <div style="width: 100%; max-width: 300px; position: relative;">
+            <div class="kpi-grid chart-grid">
+                <div class="chart-box">
+                    <h3>Distribución por Estado</h3>
+                    <div class="chart-wrapper">
                         <canvas id="graficoEstados"></canvas>
                     </div>
                 </div>
                 
-                <div class="chart-box" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                    <h3 style="text-align: center; color: #2b3a67; margin-bottom: 15px; font-size: 16px;">Calificaciones (Estrellas)</h3>
-                    <div style="width: 100%; position: relative;">
+                <div class="chart-box">
+                    <h3>Calificaciones (Estrellas)</h3>
+                    <div class="chart-wrapper">
                         <canvas id="graficoCalificaciones"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NUEVO: PANEL DE ADN LITERARIO -->
+            <div class="adn-panel">
+                <h2>🧬 Tu ADN Literario</h2>
+                
+                <div class="adn-grid">
+                    <!-- Autor -->
+                    <div class="adn-card">
+                        <div class="adn-icono">✍️</div>
+                        <h4 class="adn-titulo">Autor Top</h4>
+                        <p id="adn-autor" class="adn-valor">-</p>
+                    </div>
+                    
+                    <!-- Género -->
+                    <div class="adn-card">
+                        <div class="adn-icono">🎭</div>
+                        <h4 class="adn-titulo">Género Favorito</h4>
+                        <p id="adn-genero" class="adn-valor">-</p>
+                    </div>
+                    
+                    <!-- Editorial -->
+                    <div class="adn-card">
+                        <div class="adn-icono">🏢</div>
+                        <h4 class="adn-titulo">Editorial Top</h4>
+                        <p id="adn-editorial" class="adn-valor">-</p>
+                    </div>
+                    
+                    <!-- La Reliquia -->
+                    <div class="adn-card reliquia">
+                        <div class="adn-icono">📜</div>
+                        <h4 class="adn-titulo">La Reliquia</h4>
+                        <p id="adn-reliquia" class="adn-valor">-</p>
+                        <div id="adn-reliquia-ano" class="adn-subvalor"></div>
+                    </div>
+                    
+                    <!-- El Contemporáneo -->
+                    <div class="adn-card contemporaneo">
+                        <div class="adn-icono">🚀</div>
+                        <h4 class="adn-titulo">Contemporáneo</h4>
+                        <p id="adn-nuevo" class="adn-valor">-</p>
+                        <div id="adn-nuevo-ano" class="adn-subvalor"></div>
                     </div>
                 </div>
             </div>
