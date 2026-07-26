@@ -151,7 +151,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                 <ul class="book-details-list" style="flex-shrink: 0;">
                                     <li><strong>Género:</strong> ${libro.genero || 'No especificado'}</li>
                                     <li><strong>Editorial:</strong> ${libro.editorial || 'No especificada'}</li>
-                                    <li><strong>Año Original:</strong> ${libro.anio_publicacion || 'Desconocido'}</li>
+                                    <li><strong>Año Original:</strong> ${libro.anio_publicacion ? (parseInt(libro.anio_publicacion) < 0 ? Math.abs(libro.anio_publicacion) + ' a.C.' : libro.anio_publicacion) : 'Desconocido'}</li>
                                     <li><strong>Páginas:</strong> ${libro.num_paginas || 0}</li>
                                     <li><strong>Palabras:</strong> ${libro.palabras || Math.round((libro.num_paginas || 0) * 250)}</li>
                                 </ul>

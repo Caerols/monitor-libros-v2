@@ -64,8 +64,85 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+// =========================================================
+    // 2. MOTOR DEL ADN LITERARIO (Metadatos)
     // =========================================================
-    // 2. MOTOR DE GRÁFICOS (Chart.js)
+    function calcularADN(libros) {
+        if (!libros || libros.length === 0) return;
+
+        let contadorAutores = {};
+        let contadorGeneros = {};
+        let contadorEditoriales = {};
+        
+        let libroMasAntiguo = null;
+        let libroMasNuevo = null;
+
+        libros.forEach(libro => {
+            // 2.1 Procesar Favoritos
+            if (libro.autor && libro.autor.trim() !== "") {
+                contadorAutores[libro.autor] = (contadorAutores[libro.autor] || 0) + 1;
+            }
+            if (libro.genero && libro.genero.trim() !== "") {
+                contadorGeneros[libro.genero] = (contadorGeneros[libro.genero] || 0) + 1;
+            }
+            if (libro.editorial && libro.editorial.trim() !== "") {
+                contadorEditoriales[libro.editorial] = (contadorEditoriales[libro.editorial] || 0) + 1;
+            }
+
+            // 2.2 MÁQUINA DEL TIEMPO (Ahora acepta años a.C. con números negativos)
+            const anioNum = parseInt(libro.anio_publicacion);
+
+            // Aceptamos cualquier número válido que NO sea 0 (0 suele ser el valor por defecto de "vacío")
+            if (!isNaN(anioNum) && anioNum !== 0) {
+                libro._anioCalculado = anioNum; 
+
+                // Matemáticamente -500 es menor que 1990, así que la lógica funciona perfecto
+                if (!libroMasAntiguo || anioNum < libroMasAntiguo._anioCalculado) {
+                    libroMasAntiguo = libro;
+                }
+                if (!libroMasNuevo || anioNum > libroMasNuevo._anioCalculado) {
+                    libroMasNuevo = libro;
+                }
+            }
+        });
+
+        // Función interna para sacar al ganador
+        function encontrarFavorito(contador) {
+            let favorito = "-";
+            let maxVotos = 0;
+            for (const [nombre, votos] of Object.entries(contador)) {
+                if (votos > maxVotos) {
+                    maxVotos = votos;
+                    favorito = nombre;
+                }
+            }
+            return favorito;
+        }
+
+        // Función mágica para formatear años negativos
+        function formatearAnio(anio) {
+            if (anio < 0) return `${Math.abs(anio)} a.C.`; // Math.abs quita el signo menos
+            return anio;
+        }
+
+        // 3. Inyectar Resultados en el HTML
+        document.getElementById('adn-autor').innerText = encontrarFavorito(contadorAutores);
+        document.getElementById('adn-genero').innerText = encontrarFavorito(contadorGeneros);
+        document.getElementById('adn-editorial').innerText = encontrarFavorito(contadorEditoriales);
+
+        if (libroMasAntiguo) {
+            document.getElementById('adn-reliquia').innerText = libroMasAntiguo.titulo;
+            document.getElementById('adn-reliquia-ano').innerText = `Año: ${formatearAnio(libroMasAntiguo._anioCalculado)}`;
+        }
+        
+        if (libroMasNuevo) {
+            document.getElementById('adn-nuevo').innerText = libroMasNuevo.titulo;
+            document.getElementById('adn-nuevo-ano').innerText = `Año: ${formatearAnio(libroMasNuevo._anioCalculado)}`;
+        }
+    }
+
+    // =========================================================
+    // 3. MOTOR DE GRÁFICOS (Chart.js)
     // =========================================================
     function renderizarGraficos(libros) {
         if (!libros || libros.length === 0) return;
@@ -104,7 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: false, // ¡Clave para que respete el tamaño del div!
+                maintainAspectRatio: false,
                 plugins: {
                     legend: { 
                         position: 'bottom',
@@ -119,7 +196,8 @@ document.addEventListener('DOMContentLoaded', () => {
         new Chart(ctxCalificaciones, {
             type: 'bar',
             data: {
-                labels: ['⭐⭐⭐⭐⭐', '⭐⭐⭐⭐', '⭐⭐⭐', '⭐⭐', '⭐', 'Sin nota'],
+                // ARREGLO VISUAL: Etiquetas cortas para que ChartJS no las rote en diagonal
+                labels: ['5 ⭐', '4 ⭐', '3 ⭐', '2 ⭐', '1 ⭐', 'Sin nota'],
                 datasets: [{
                     label: 'Cantidad de Libros',
                     data: [
@@ -136,8 +214,11 @@ document.addEventListener('DOMContentLoaded', () => {
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: false, // ¡Clave aquí también!
+                maintainAspectRatio: false,
                 scales: {
+                    x: {
+                        ticks: { autoSkip: false, maxRotation: 0, minRotation: 0 } // Forzamos texto 100% horizontal
+                    },
                     y: { 
                         beginAtZero: true, 
                         ticks: { stepSize: 1 } 
@@ -151,7 +232,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // =========================================================
-    // 3. CONEXIÓN A LA BASE DE DATOS
+    // 4. CONEXIÓN A LA BASE DE DATOS
     // =========================================================
     const API_URL = 'https://bibliotecaria-bot.onrender.com/api/biblioteca/catalogo';
 
@@ -164,7 +245,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const catalogo = data.catalogo;
             if (catalogo && catalogo.length > 0) {
                 calcularEstadisticas(catalogo);
-                renderizarGraficos(catalogo); // Activamos los gráficos
+                calcularADN(catalogo); // Activamos el nuevo cerebro de metadatos
+                renderizarGraficos(catalogo); 
             }
         })
         .catch(error => {
