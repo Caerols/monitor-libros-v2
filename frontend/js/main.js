@@ -156,28 +156,72 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    function dibujarGrafico(libros) {
+   function dibujarGrafico(libros) {
         const ctx = document.getElementById('graficoPrecios').getContext('2d');
         
         if (chartInstance) {
             chartInstance.destroy();
         }
 
-        const datasets = libros.map(titulo => {
-            // Genera un color único por libro basado en su nombre
+        // 1. MOTOR DE VOLATILIDAD: Evaluar los libros recibidos
+        let librosEvaluados = [];
+
+        libros.forEach(titulo => {
+            const datos = datosGlobales[titulo];
+            
+            // Si el max y min son iguales (o 0), significa que es un precio plano. Lo descartamos.
+            const esPlano = datos.max === datos.min;
+            
+            // Calculamos cuánto varió en total (el "salto" de precio)
+            const variacion = datos.max - datos.min;
+
+            if (!esPlano) {
+                librosEvaluados.push({
+                    titulo: titulo,
+                    variacion: variacion,
+                    datosY: fechasGlobales.map(fecha => datos.precios[fecha] || null)
+                });
+            }
+        });
+
+        // 2. RANKING Y TOP 5: Si estamos viendo "Todos", mostramos solo el Top 5 más volátil.
+        // Si el usuario eligió un libro específico en el filtro, saltamos este paso.
+        let librosParaGraficar = librosEvaluados;
+        
+        if (libros.length > 1) { 
+            // Ordenar de mayor a menor variación
+            librosEvaluados.sort((a, b) => b.variacion - a.variacion);
+            // Quedarse solo con los 5 primeros
+            librosParaGraficar = librosEvaluados.slice(0, 5);
+        }
+
+        // Si todos los libros del filtro son "planos", detenemos el gráfico para no mostrar algo vacío
+        if (librosParaGraficar.length === 0) {
+            console.warn("Todos los precios son estáticos. No hay fluctuaciones para graficar.");
+            // Opcional: Podrías inyectar un texto en el canvas o dejarlo vacío
+            return; 
+        }
+
+        // 3. PREPARAR DATASETS PARA CHART.JS
+        const datasets = librosParaGraficar.map(libroInfo => {
+            const titulo = libroInfo.titulo;
             const colorHue = Array.from(titulo).reduce((acc, char) => acc + char.charCodeAt(0), 0) % 360;
             const colorLindo = `hsl(${colorHue}, 70%, 50%)`;
             
             return {
-                label: titulo,
-                data: fechasGlobales.map(fecha => datosGlobales[titulo].precios[fecha] || null),
+                label: titulo, // El nombre completo se guarda aquí
+                data: libroInfo.datosY,
                 borderColor: colorLindo,
                 backgroundColor: colorLindo,
                 tension: 0.3,
-                spanGaps: true
+                spanGaps: true,
+                borderWidth: 3,
+                pointRadius: 4,
+                pointHoverRadius: 7
             };
         });
 
+        // 4. DIBUJAR EL GRÁFICO (Con la leyenda trucada)
         chartInstance = new Chart(ctx, {
             type: 'line',
             data: {
@@ -187,23 +231,55 @@ document.addEventListener("DOMContentLoaded", () => {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
                 plugins: {
                     legend: { 
                         position: window.innerWidth < 600 ? 'bottom' : 'top',
                         labels: {
                             boxWidth: window.innerWidth < 600 ? 10 : 40,
-                            font: { size: window.innerWidth < 600 ? 10 : 12 }
+                            font: { size: window.innerWidth < 600 ? 10 : 12 },
+                            usePointStyle: true,
+                            padding: 20,
+                            // MAGIA 1: Acortamos el texto de la leyenda a 35 caracteres
+                            generateLabels: function(chart) {
+                                const original = Chart.defaults.plugins.legend.labels.generateLabels;
+                                const labels = original.call(this, chart);
+                                labels.forEach(label => {
+                                    if (label.text.length > 35) {
+                                        label.text = label.text.substring(0, 35) + '...';
+                                    }
+                                });
+                                return labels;
+                            }
                         }
                     },
                     tooltip: {
+                        backgroundColor: 'rgba(26, 35, 126, 0.9)', // Estilo Matriz
+                        titleFont: { size: 14 },
                         callbacks: {
+                            // MAGIA 2: Mostramos el título completo en el tooltip negro
+                            title: function(context) {
+                                return context[0].dataset.label; 
+                            },
                             label: function(context) {
-                                let label = context.dataset.label || '';
-                                if (label) label += ': ';
+                                let label = ''; // Ocultamos el nombre aquí porque ya está en el título del tooltip
                                 if (context.parsed.y !== null) {
                                     label += formatearDinero(context.parsed.y);
                                 }
                                 return label;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: false, // Permite el zoom dramático en las curvas
+                        ticks: {
+                            callback: function(value) {
+                                return formatearDinero(value);
                             }
                         }
                     }
