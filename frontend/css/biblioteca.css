@@ -1,68 +1,6 @@
-/* =========================================
-   LAYOUT PRINCIPAL (Menú Lateral + Contenido)
-   ========================================= */
-.app-layout {
-    display: flex;
-    min-height: 100vh;
-    background-color: #f0f2f5;
-}
-
-/* Menú Lateral */
-.sidebar {
-    width: 260px;
-    background-color: #1a237e;
-    color: white;
-    display: flex;
-    flex-direction: column;
-    box-shadow: 2px 0 10px rgba(0,0,0,0.1);
-}
-
-.sidebar-header {
-    padding: 20px;
-    text-align: center;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
-}
-
-.sidebar-nav {
-    padding: 20px 0;
-    display: flex;
-    flex-direction: column;
-}
-
-.nav-section {
-    padding: 10px 20px;
-    font-size: 12px;
-    text-transform: uppercase;
-    color: #9fa8da;
-    font-weight: bold;
-    letter-spacing: 1px;
-    margin-top: 10px;
-}
-
-.nav-link {
-    padding: 12px 20px;
-    color: #e8eaf6;
-    text-decoration: none;
-    transition: background 0.3s, padding-left 0.3s;
-}
-
-.nav-link:hover, .nav-link.active {
-    background-color: #283593;
-    border-left: 4px solid #4db6ac;
-    padding-left: 24px;
-    font-weight: bold;
-}
-
-/* Área de Contenido */
-.main-content {
-    flex: 1;
-    padding: 30px;
-    overflow-y: auto;
-}
-
-/* =========================================
-   CUADRÍCULA DEL CATÁLOGO
-   ========================================= */
+/* =====================================================================
+   1. CUADRÍCULA DEL CATÁLOGO
+   ===================================================================== */
 .catalogo-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -70,14 +8,14 @@
     margin-top: 20px;
 }
 
-/* =========================================
-   SISTEMA FLIP CARD 3D (Magia CSS)
-   ========================================= */
+/* =====================================================================
+   2. SISTEMA FLIP CARD 3D (Solo Estructura Geométrica - Matriz Profunda)
+   ===================================================================== */
 .book-card {
     background-color: transparent;
     width: 100%;
-    height: 420px;
-    perspective: 1000px; /* Le da profundidad 3D al giro */
+    height: 440px;
+    perspective: 1000px; /* Profundidad 3D */
     cursor: pointer;
 }
 
@@ -90,92 +28,79 @@
     transform-style: preserve-3d;
 }
 
-/* Evento de Giro: Gira 180 grados en el eje Y al pasar el mouse */
+/* Giro al pasar el ratón */
 .book-card:hover .book-card-inner {
     transform: rotateY(180deg);
 }
 
-/* Estilos comunes para Frente y Reverso */
 .book-card-front, .book-card-back {
     position: absolute;
     width: 100%;
     height: 100%;
-    -webkit-backface-visibility: hidden; /* Oculta la parte de atrás de Safari */
-    backface-visibility: hidden;         /* Oculta la parte que no está de frente */
-    border-radius: 12px;
-    box-shadow: 0 8px 16px rgba(0,0,0,0.1);
-    background-color: white;
-    overflow: hidden;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
 }
 
-/* =========================================
-   DISEÑO DEL FRENTE
-   ========================================= */
+.book-card-back {
+    transform: rotateY(180deg);
+}
+
+/* =====================================================================
+   3. ELEMENTOS INTERNOS DE LA TARJETA
+   ===================================================================== */
 .portada-placeholder {
     height: 60%;
-    background: linear-gradient(135deg, #2b3a67, #1a237e);
-    color: white;
     display: flex;
     align-items: center;
     justify-content: center;
     text-align: center;
-    padding: 20px;
-    font-size: 20px;
+    font-size: 18px;
     font-weight: bold;
-    font-family: serif;
 }
 
 .book-info-front {
     padding: 15px;
+    height: 40%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
 }
 
 .book-info-front h3 {
     margin: 0 0 5px 0;
-    font-size: 18px;
-    color: #222;
+    font-size: 16px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .book-info-front .autor {
-    color: #666;
-    font-size: 14px;
-    margin-bottom: 10px;
+    font-size: 13px;
+    margin-bottom: auto;
 }
 
 .book-badges {
     display: flex;
     justify-content: space-between;
-    margin-top: 15px;
+    align-items: center;
+    margin-top: 10px;
 }
 
 .badge {
     padding: 4px 8px;
     border-radius: 4px;
-    font-size: 12px;
-    font-weight: bold;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
 }
 
-.badge-estado.en-lectura { background-color: #e3f2fd; color: #1565c0; }
-.badge-estado.leido { background-color: #e8f5e9; color: #2e7d32; }
-.badge-estado.pendiente { background-color: #fff3cd; color: #856404; }
-
-/* =========================================
-   DISEÑO DEL REVERSO
-   ========================================= */
-.book-card-back {
-    background-color: #f8f9fa;
-    color: #333;
-    transform: rotateY(180deg); /* El reverso empieza girado */
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-}
-
-.book-card-back h3 {
-    margin-top: 0;
-    color: #1a237e;
-    border-bottom: 2px solid #ccc;
-    padding-bottom: 5px;
-}
+/* Badges de Estado en colores Neón para la oscuridad */
+.badge-estado.en-lectura { background-color: rgba(6, 182, 212, 0.1); color: var(--neon-cyan); border: 1px solid rgba(6, 182, 212, 0.3); }
+.badge-estado.leido { background-color: rgba(16, 185, 129, 0.1); color: var(--neon-verde); border: 1px solid rgba(16, 185, 129, 0.3); }
+.badge-estado.pendiente { background-color: rgba(245, 158, 11, 0.1); color: var(--neon-ambar); border: 1px solid rgba(245, 158, 11, 0.3); }
 
 .book-details-list {
     list-style: none;
@@ -185,39 +110,71 @@
     line-height: 1.6;
 }
 
-.book-finanzas {
-    margin-top: 10px;
-    background: #e8f5e9;
-    padding: 10px;
-    border-radius: 6px;
-    font-size: 13px;
-    color: #2e7d32;
-    border-left: 4px solid #4caf50;
+/* =====================================================================
+   4. FORMULARIOS Y BOTONES (Modal de Editor)
+   ===================================================================== */
+.btn-primario { 
+    background: rgba(6, 182, 212, 0.1); 
+    color: var(--neon-cyan); 
+    border: 1px solid var(--neon-cyan); 
+    padding: 10px 20px; 
+    border-radius: 8px; 
+    cursor: pointer; 
+    font-weight: 600; 
+    font-size: 14px; 
+    transition: all 0.3s;
+}
+.btn-primario:hover { 
+    background: rgba(6, 182, 212, 0.2); 
+    box-shadow: 0 0 15px rgba(6, 182, 212, 0.3);
 }
 
-.book-observaciones {
-    margin-top: auto;
-    font-size: 12px;
-    color: #666;
-    background: #fff;
-    padding: 10px;
-    border-radius: 6px;
-    border: 1px dashed #ccc;
+.btn-magico { 
+    background: rgba(139, 92, 246, 0.1); 
+    color: #a78bfa; 
+    border: 1px solid #8b5cf6; 
+    padding: 10px 20px; 
+    border-radius: 8px; 
+    cursor: pointer; 
+    font-weight: 600; 
+    transition: all 0.3s;
+}
+.btn-magico:hover { 
+    background: rgba(139, 92, 246, 0.2); 
+    box-shadow: 0 0 15px rgba(139, 92, 246, 0.3);
 }
 
-/* Estilos para el Botón y Modal */
-.btn-primario { background: #1a237e; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 14px; }
-.btn-primario:hover { background: #283593; }
+.formulario-grid { 
+    display: grid; 
+    grid-template-columns: 1fr 1fr; 
+    gap: 15px; 
+}
 
-.btn-magico { background: linear-gradient(135deg, #4db6ac, #00897b); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; }
-.btn-magico:hover { opacity: 0.9; }
+.form-grupo { 
+    display: flex; 
+    flex-direction: column; 
+}
 
-.modal-oculto { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); }
-.modal-contenido { background-color: #fff; margin: 5% auto; padding: 30px; border-radius: 12px; width: 80%; max-width: 600px; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
-.cerrar-modal { position: absolute; right: 20px; top: 15px; font-size: 28px; font-weight: bold; color: #aaa; cursor: pointer; }
-.cerrar-modal:hover { color: #333; }
+.form-grupo label { 
+    font-size: 11px; 
+    font-weight: 600; 
+    color: var(--texto-mutado); 
+    margin-bottom: 6px; 
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
 
-.formulario-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-.form-grupo { display: flex; flex-direction: column; }
-.form-grupo label { font-size: 13px; font-weight: bold; color: #555; margin-bottom: 5px; }
-.form-grupo input, .form-grupo textarea { padding: 8px 12px; border: 1px solid #ccc; border-radius: 6px; font-family: inherit; }
+.form-grupo input, .form-grupo textarea, .form-grupo select { 
+    padding: 10px 12px; 
+    background-color: var(--bg-abismo); 
+    border: 1px solid var(--borde-fino); 
+    color: var(--texto-brillante);
+    border-radius: 6px; 
+    font-family: inherit; 
+    transition: border 0.3s;
+    outline: none;
+}
+
+.form-grupo input:focus, .form-grupo textarea:focus, .form-grupo select:focus {
+    border-color: var(--neon-cyan);
+}

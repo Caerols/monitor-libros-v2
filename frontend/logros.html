@@ -4,32 +4,38 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Logros | Matriz Central</title>
+    <!-- Íconos Phosphor -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
     <div class="app-layout">
+        
         <!-- SUBMENÚ LATERAL -->
         <aside class="sidebar">
             <div class="sidebar-header">
                 <h2>Matriz Central</h2>
-                <button class="btn-menu-mobile" onclick="document.getElementById('nav-menu').classList.toggle('show-menu')">☰</button>
+                <!-- Botón Hamburguesa -->
+                <button class="btn-menu-mobile" onclick="document.getElementById('nav-menu').classList.toggle('show-menu')">
+                    <i class="ph ph-list"></i>
+                </button>
             </div>
             <nav class="sidebar-nav" id="nav-menu">
                 <p class="nav-section">Módulo Principal</p>
-                <a href="index.html" class="nav-link">📊 Ofertas e Historial</a>
+                <a href="index.html" class="nav-link"><i class="ph ph-chart-line-up" style="margin-right: 8px;"></i> Ofertas e Historial</a>
                 
                 <p class="nav-section">Mi Biblioteca</p>
-                <a href="biblioteca.html" class="nav-link">📚 Catálogo</a>
-                <a href="estadisticas.html" class="nav-link">📈 Estadísticas</a>
-                <a href="logros.html" class="nav-link active">🏆 Logros</a>
+                <a href="biblioteca.html" class="nav-link"><i class="ph ph-books" style="margin-right: 8px;"></i> Catálogo</a>
+                <a href="estadisticas.html" class="nav-link"><i class="ph ph-chart-pie-slice" style="margin-right: 8px;"></i> Estadísticas</a>
+                <a href="logros.html" class="nav-link active"><i class="ph ph-trophy" style="margin-right: 8px;"></i> Logros</a>
             </nav>
         </aside>
 
         <!-- CONTENIDO PRINCIPAL -->
         <main class="main-content">
             <header class="dashboard-header">
-                <h1>🏆 Salón de Trofeos</h1>
-                <p>Hitos, medallas y gamificación de tus hábitos de lectura.</p>
+                <h1><i class="ph ph-medal" style="color: var(--neon-ambar); margin-right: 10px;"></i> Salón de Trofeos</h1>
+                <p>Hitos, medallas y gamificación de tus parámetros de lectura.</p>
             </header>
             
             <!-- VITRINA DE LOGROS -->
@@ -37,7 +43,7 @@
                 
                 <!-- 1. Iniciado -->
                 <div class="logro-card bloqueado" id="logro-iniciado">
-                    <div class="logro-icono">📖</div>
+                    <div class="logro-icono"><i class="ph ph-book-open"></i></div>
                     <h3>Iniciado</h3>
                     <p>Finaliza tu primer expediente (1 libro leído).</p>
                     <div class="progreso-texto" id="progreso-iniciado">0 / 1</div>
@@ -45,7 +51,7 @@
 
                 <!-- 2. Devorador de Páginas -->
                 <div class="logro-card bloqueado" id="logro-devorador">
-                    <div class="logro-icono">📑</div>
+                    <div class="logro-icono"><i class="ph ph-bookmarks"></i></div>
                     <h3>Devorador de Páginas</h3>
                     <p>Alcanza las 10,000 páginas leídas en total.</p>
                     <div class="progreso-texto" id="progreso-devorador">0 / 10.000</div>
@@ -53,7 +59,7 @@
 
                 <!-- 3. Erudito -->
                 <div class="logro-card bloqueado" id="logro-erudito">
-                    <div class="logro-icono">🧠</div>
+                    <div class="logro-icono"><i class="ph ph-brain"></i></div>
                     <h3>Erudito</h3>
                     <p>Lee más de 1.000.000 de palabras.</p>
                     <div class="progreso-texto" id="progreso-erudito">0 / 1.000.000</div>
@@ -61,7 +67,7 @@
 
                 <!-- 4. Diógenes Literario -->
                 <div class="logro-card bloqueado" id="logro-diogenes">
-                    <div class="logro-icono">📚</div>
+                    <div class="logro-icono"><i class="ph ph-books"></i></div>
                     <h3>Diógenes Literario</h3>
                     <p>Acumula 15 libros en estado "Pendiente".</p>
                     <div class="progreso-texto" id="progreso-diogenes">0 / 15</div>
@@ -69,7 +75,7 @@
 
                 <!-- 5. Buscador de Oro -->
                 <div class="logro-card bloqueado" id="logro-oro">
-                    <div class="logro-icono">⭐</div>
+                    <div class="logro-icono"><i class="ph ph-star"></i></div>
                     <h3>Buscador de Oro</h3>
                     <p>Califica 5 libros distintos como Obra Maestra (5 estrellas).</p>
                     <div class="progreso-texto" id="progreso-oro">0 / 5</div>
@@ -77,7 +83,7 @@
 
                 <!-- 6. Crítico Implacable -->
                 <div class="logro-card bloqueado" id="logro-critico">
-                    <div class="logro-icono">🔨</div>
+                    <div class="logro-icono"><i class="ph ph-hammer"></i></div>
                     <h3>Crítico Implacable</h3>
                     <p>Califica 3 libros con 1 o 2 estrellas.</p>
                     <div class="progreso-texto" id="progreso-critico">0 / 3</div>
@@ -85,7 +91,7 @@
 
                 <!-- 7. Maratón -->
                 <div class="logro-card bloqueado" id="logro-maraton">
-                    <div class="logro-icono">🏃‍♂️</div>
+                    <div class="logro-icono"><i class="ph ph-person-simple-run"></i></div>
                     <h3>Maratón de Resistencia</h3>
                     <p>Finaliza un libro de más de 800 páginas.</p>
                     <div class="progreso-texto" id="progreso-maraton">Bloqueado</div>

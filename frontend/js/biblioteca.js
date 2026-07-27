@@ -6,7 +6,7 @@ window.catalogoGlobal = [];
 window.buscarPortadaAlternativa = async function(imgElement, isbn, titulo, autor) {
     // 1. Apagamos el onerror para evitar un loop infinito si Google también falla
     imgElement.onerror = function() {
-        this.style.display = 'none'; // Si falla todo, mostramos fondo azul
+        this.style.display = 'none'; // Si falla todo, mostramos fondo oscuro
     };
 
     try {
@@ -20,7 +20,7 @@ window.buscarPortadaAlternativa = async function(imgElement, isbn, titulo, autor
             return;
         }
 
-        // Intento 2: Buscar en Google Books por Título y Autor (Útil para ediciones raras)
+        // Intento 2: Buscar en Google Books por Título y Autor
         const query = encodeURIComponent(`${titulo} ${autor}`);
         response = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${query}&maxResults=1`);
         data = await response.json();
@@ -41,7 +41,7 @@ window.buscarPortadaAlternativa = async function(imgElement, isbn, titulo, autor
 
 document.addEventListener("DOMContentLoaded", () => {
     // =====================================================================
-    // 1. MOTOR DE RENDERIZADO DEL CATÁLOGO (FLIP CARDS)
+    // 1. MOTOR DE RENDERIZADO DEL CATÁLOGO (FLIP CARDS - MATRIZ PROFUNDA)
     // =====================================================================
     const API_URL = 'https://bibliotecaria-bot.onrender.com/api/biblioteca/catalogo';
     const contenedorCatalogo = document.getElementById('catalogo-container');
@@ -61,9 +61,14 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     };
 
+    // Generador de estrellas usando Phosphor Icons en tono Neón Ámbar
     const generarEstrellas = (calificacion) => {
-        if (!calificacion) return "Sin calificar";
-        return "⭐".repeat(calificacion);
+        if (!calificacion || calificacion === 0) return "<span style='color: var(--texto-mutado); font-size: 12px;'>Sin calificar</span>";
+        let starsHTML = "";
+        for (let i = 0; i < calificacion; i++) {
+            starsHTML += `<i class="ph-fill ph-star" style="color: var(--neon-ambar); text-shadow: 0 0 5px rgba(245, 158, 11, 0.5);"></i>`;
+        }
+        return starsHTML;
     };
 
     // Extraer datos de la API y dibujar tarjetas
@@ -75,14 +80,15 @@ document.addEventListener("DOMContentLoaded", () => {
         .then(data => {
             const catalogo = data.catalogo;
             
-            // ¡CLAVE! Guardamos los datos en la variable global para poder editarlos luego
+            // Guardamos los datos en la variable global
             window.catalogoGlobal = catalogo; 
             
             if (!catalogo || catalogo.length === 0) {
                 contenedorCatalogo.innerHTML = `
-                    <div style="grid-column: 1 / -1; text-align: center; padding: 40px; background: white; border-radius: 12px;">
-                        <h3>🗂️ Tu biblioteca está vacía</h3>
-                        <p>Aún no has registrado ningún expediente en tu colección personal.</p>
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 50px; background: var(--bg-tarjeta); border: 1px dashed var(--borde-fino); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+                        <i class="ph ph-folder-dashed" style="font-size: 48px; color: var(--texto-mutado); margin-bottom: 15px; display: block;"></i>
+                        <h3 style="color: var(--texto-brillante); margin-bottom: 10px;">Base de datos vacía</h3>
+                        <p style="color: var(--texto-mutado);">Aún no has registrado ningún expediente en tu colección personal.</p>
                     </div>`;
                 return;
             }
@@ -94,7 +100,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 const claseEstado = obtenerClaseEstado(libro.estado_lectura);
                 const precioTexto = formatearDinero(libro.precio_pagado);
                 const estrellas = generarEstrellas(libro.calificacion);
-                const observaciones = libro.observaciones ? `<em>"${libro.observaciones}"</em>` : "<em>Sin observaciones.</em>";
+                const observaciones = libro.observaciones ? `<em style="color: var(--texto-base);">"${libro.observaciones}"</em>` : "<em style='color: var(--texto-mutado);'>Sin anotaciones.</em>";
 
                 // =========================================================
                 // MAGIA DE LAS PORTADAS (OpenLibrary -> Google Books Fallback)
@@ -102,73 +108,73 @@ document.addEventListener("DOMContentLoaded", () => {
                 const isbnLimpio = libro.isbn ? String(libro.isbn).replace(/[^0-9X]/gi, '') : '';
                 
                 let portadaHTML = `
-                    <div class="portada-placeholder">
-                        <span>${libro.titulo}</span>
+                    <div class="portada-placeholder" style="background: var(--bg-input); color: var(--texto-mutado); display: flex; align-items: center; justify-content: center; height: 100%;">
+                        <span style="padding: 15px; text-align: center;">${libro.titulo}</span>
                     </div>`;
                 
                 if (isbnLimpio) {
                     const urlImagen = `https://covers.openlibrary.org/b/isbn/${isbnLimpio}-L.jpg?default=false`;
-                    // Escapamos comillas simples en títulos/autores para no romper el HTML
                     const tituloEscapado = libro.titulo.replace(/'/g, "\\'");
                     const autorEscapado = libro.autor.replace(/'/g, "\\'");
                     
                     portadaHTML = `
-                        <div class="portada-placeholder" style="position: relative; overflow: hidden; padding: 0;">
-                            <!-- Capa 1: Texto de respaldo (siempre al fondo) -->
-                            <div style="position: absolute; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; padding: 15px; box-sizing: border-box; text-align: center;">
+                        <div class="portada-placeholder" style="position: relative; overflow: hidden; padding: 0; background: var(--bg-input); height: 100%;">
+                            <!-- Capa 1: Texto de respaldo -->
+                            <div style="position: absolute; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; padding: 15px; box-sizing: border-box; text-align: center; color: var(--texto-mutado);">
                                 <span>${libro.titulo}</span>
                             </div>
-                            <!-- Capa 2: La imagen real. Cambio clave: object-fit: contain y background blanco -->
+                            <!-- Capa 2: Imagen real. Fondo transparente/abismo -->
                             <img src="${urlImagen}" 
                                  alt="Portada de ${libro.titulo}"
-                                 style="width: 100%; height: 100%; object-fit: contain; position: relative; z-index: 10; background-color: #ffffff;"
+                                 style="width: 100%; height: 100%; object-fit: contain; position: relative; z-index: 10; background-color: var(--bg-abismo);"
                                  onerror="buscarPortadaAlternativa(this, '${isbnLimpio}', '${tituloEscapado}', '${autorEscapado}')">
                         </div>
                     `;
                 }
-                // =========================================================
 
                 const tarjetaHTML = `
                     <div class="book-card">
                         <div class="book-card-inner">
                             
                             <!-- FRENTE -->
-                            <div class="book-card-front">
+                            <div class="book-card-front" style="background: var(--bg-tarjeta); border: 1px solid var(--borde-fino); border-top: 2px solid var(--neon-cyan); border-radius: 8px; overflow: hidden;">
                                 ${portadaHTML}
-                                <div class="book-info-front">
-                                    <h3>${libro.titulo}</h3>
-                                    <p class="autor">${libro.autor}</p>
+                                <div class="book-info-front" style="background: var(--bg-tarjeta); border-top: 1px solid var(--borde-fino);">
+                                    <h3 style="color: var(--texto-brillante);">${libro.titulo}</h3>
+                                    <p class="autor" style="color: var(--texto-mutado);">${libro.autor}</p>
                                     <div class="book-badges">
                                         <span class="badge badge-estado ${claseEstado}">${libro.estado_lectura}</span>
-                                        <span class="badge badge-rating">${estrellas}</span>
+                                        <span class="badge badge-rating" style="background: rgba(0,0,0,0.3); border: 1px solid var(--borde-fino); padding: 4px 8px; display: flex; align-items: center; gap: 2px;">${estrellas}</span>
                                     </div>
                                 </div>
                             </div>
 
                            <!-- REVERSO -->
-                            <div class="book-card-back" style="display: flex; flex-direction: column; height: 100%; max-height: 100%; box-sizing: border-box; overflow: hidden; padding-bottom: 20px;">
-                                <h3 style="flex-shrink: 0;">Archivo Literario</h3>
-                                <ul class="book-details-list" style="flex-shrink: 0;">
-                                    <li><strong>Género:</strong> ${libro.genero || 'No especificado'}</li>
-                                    <li><strong>Editorial:</strong> ${libro.editorial || 'No especificada'}</li>
-                                    <li><strong>Año Original:</strong> ${libro.anio_publicacion ? (parseInt(libro.anio_publicacion) < 0 ? Math.abs(libro.anio_publicacion) + ' a.C.' : libro.anio_publicacion) : 'Desconocido'}</li>
-                                    <li><strong>Páginas:</strong> ${libro.num_paginas || 0}</li>
-                                    <li><strong>Palabras:</strong> ${libro.palabras || Math.round((libro.num_paginas || 0) * 250)}</li>
+                            <div class="book-card-back" style="background: var(--bg-tarjeta); color: var(--texto-base); border: 1px solid var(--borde-fino); border-top: 2px solid var(--neon-cyan); border-radius: 8px; display: flex; flex-direction: column; height: 100%; max-height: 100%; box-sizing: border-box; overflow: hidden; padding: 20px; padding-bottom: 20px;">
+                                <h3 style="flex-shrink: 0; color: var(--texto-brillante); border-bottom: 1px solid var(--borde-fino); padding-bottom: 10px; font-size: 15px; text-transform: uppercase; letter-spacing: 1px;">
+                                    <i class="ph ph-archive" style="color: var(--neon-cyan); margin-right: 5px;"></i> Archivo Literario
+                                </h3>
+                                <ul class="book-details-list" style="flex-shrink: 0; padding-top: 10px;">
+                                    <li><strong style="color: var(--texto-mutado);">Género:</strong> ${libro.genero || 'No especificado'}</li>
+                                    <li><strong style="color: var(--texto-mutado);">Editorial:</strong> ${libro.editorial || 'No especificada'}</li>
+                                    <li><strong style="color: var(--texto-mutado);">Año Original:</strong> ${libro.anio_publicacion ? (parseInt(libro.anio_publicacion) < 0 ? Math.abs(libro.anio_publicacion) + ' a.C.' : libro.anio_publicacion) : 'Desconocido'}</li>
+                                    <li><strong style="color: var(--texto-mutado);">Páginas:</strong> ${libro.num_paginas || 0}</li>
+                                    <li><strong style="color: var(--texto-mutado);">Palabras:</strong> ${libro.palabras || Math.round((libro.num_paginas || 0) * 250)}</li>
                                 </ul>
                                 
                                 <!-- Caja de texto con Scroll Inteligente -->
-                                <div class="book-observaciones" style="flex: 1 1 auto; overflow-y: auto; min-height: 0; margin-top: 10px; border-top: 1px dashed #ccc; padding-top: 10px; margin-bottom: 15px; padding-right: 5px;">
-                                    <strong>Contexto / Epílogo:</strong><br>
+                                <div class="book-observaciones" style="flex: 1 1 auto; overflow-y: auto; min-height: 0; margin-top: 10px; border-top: 1px dashed var(--borde-fino); padding-top: 10px; margin-bottom: 15px; padding-right: 5px; font-size: 13px;">
+                                    <strong style="color: var(--texto-mutado);">Contexto / Epílogo:</strong><br>
                                     ${observaciones}
                                 </div>
 
-                                <!-- Contenedor de Botones -->
+                                <!-- Contenedor de Botones (Estilo Neón) -->
                                 <div style="flex-shrink: 0; margin-top: auto;">
-                                    <button class="btn-editar" onclick="prepararEdicion(${libro.id})" style="width: 100%; padding: 8px; background-color: #ff9800; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; margin-bottom: 8px;">
-                                        ✏️ Editar Expediente
+                                    <button class="btn-editar" onclick="prepararEdicion(${libro.id})" style="width: 100%; padding: 10px; background-color: rgba(245, 158, 11, 0.1); color: var(--neon-ambar); border: 1px solid var(--neon-ambar); border-radius: 6px; cursor: pointer; font-weight: 600; margin-bottom: 8px; transition: background 0.3s;">
+                                        <i class="ph ph-pencil-simple" style="margin-right: 5px;"></i> Editar Expediente
                                     </button>
-                                    <button class="btn-eliminar" onclick="eliminarLibro(${libro.id})" style="width: 100%; padding: 8px; background-color: #d32f2f; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
-                                        🗑️ Eliminar Archivo
+                                    <button class="btn-eliminar" onclick="eliminarLibro(${libro.id})" style="width: 100%; padding: 10px; background-color: rgba(239, 68, 68, 0.1); color: var(--neon-rojo); border: 1px solid var(--neon-rojo); border-radius: 6px; cursor: pointer; font-weight: 600; transition: background 0.3s;">
+                                        <i class="ph ph-trash" style="margin-right: 5px;"></i> Eliminar Archivo
                                     </button>
                                 </div>
                             </div>
@@ -183,8 +189,9 @@ document.addEventListener("DOMContentLoaded", () => {
             console.error("Error al cargar el catálogo:", error);
             if (contenedorCatalogo) {
                 contenedorCatalogo.innerHTML = `
-                    <div style="grid-column: 1 / -1; color: #d32f2f; text-align: center; padding: 20px;">
-                        ❌ Error de conexión con la base de datos de la Bibliotecaria.
+                    <div style="grid-column: 1 / -1; color: var(--neon-rojo); text-align: center; padding: 20px; background: rgba(239, 68, 68, 0.1); border: 1px solid var(--neon-rojo); border-radius: 8px;">
+                        <i class="ph ph-warning-circle" style="font-size: 24px; margin-bottom: 10px; display: block;"></i>
+                        Error de conexión con la base de datos de la Bibliotecaria.
                     </div>`;
             }
         });
@@ -201,13 +208,13 @@ document.addEventListener("DOMContentLoaded", () => {
             const autor = document.getElementById('form-autor').value.trim();
 
             if (!titulo || !autor) {
-                mensajeInvestigacion.style.color = "#d32f2f"; 
-                mensajeInvestigacion.innerText = "⚠️ Necesito el título y el autor para iniciar la búsqueda.";
+                mensajeInvestigacion.style.color = "var(--neon-rojo)"; 
+                mensajeInvestigacion.innerHTML = "<i class='ph ph-warning'></i> Necesito el título y el autor para iniciar la búsqueda.";
                 return;
             }
 
-            mensajeInvestigacion.style.color = "#1565c0"; 
-            mensajeInvestigacion.innerText = "🔍 Interceptando señal de archivos libres... espera.";
+            mensajeInvestigacion.style.color = "var(--neon-azul)"; 
+            mensajeInvestigacion.innerHTML = "<i class='ph ph-spinner ph-spin'></i> Interceptando señal de archivos libres...";
             btnAutocompletar.disabled = true;
             btnAutocompletar.style.opacity = "0.7";
 
@@ -239,16 +246,16 @@ document.addEventListener("DOMContentLoaded", () => {
                     document.getElementById('form-isbn').value = isbnLimpio || "";
                     document.getElementById('form-resumen').value = "Resumen no disponible en la base de datos libre. (Añadir nota manual aquí).";
                     
-                    mensajeInvestigacion.style.color = "#2e7d32"; 
-                    mensajeInvestigacion.innerText = "✅ Expediente extraído con Escaneo Profundo.";
+                    mensajeInvestigacion.style.color = "var(--neon-verde)"; 
+                    mensajeInvestigacion.innerHTML = "<i class='ph ph-check-circle'></i> Expediente extraído con Escaneo Profundo.";
                 } else {
-                    mensajeInvestigacion.style.color = "#d32f2f";
-                    mensajeInvestigacion.innerText = "❌ Los archivos de OpenLibrary no tienen este libro.";
+                    mensajeInvestigacion.style.color = "var(--neon-rojo)";
+                    mensajeInvestigacion.innerHTML = "<i class='ph ph-x-circle'></i> Los archivos de OpenLibrary no tienen este libro.";
                 }
             } catch (error) {
                 console.error("Error detallado en Bypass v3:", error);
-                mensajeInvestigacion.style.color = "#d32f2f";
-                mensajeInvestigacion.innerText = `⚠️ Error: ${error.message}`;
+                mensajeInvestigacion.style.color = "var(--neon-rojo)";
+                mensajeInvestigacion.innerHTML = `<i class='ph ph-warning'></i> Error: ${error.message}`;
             } finally {
                 btnAutocompletar.disabled = false;
                 btnAutocompletar.style.opacity = "1";
@@ -283,7 +290,6 @@ document.addEventListener("DOMContentLoaded", () => {
             const idValue = document.getElementById('form-id').value;
             
             const libroData = {
-                // ¡CLAVE! Si hay un ID en el formulario oculto, lo enviamos (Edición). Si no, va como null (Nuevo).
                 id: idValue ? parseInt(idValue) : null, 
                 titulo: document.getElementById('form-titulo').value.trim(),
                 autor: document.getElementById('form-autor').value.trim(),
@@ -303,7 +309,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
 
-            btnGuardar.innerText = "⏳ Guardando...";
+            btnGuardar.innerHTML = "<i class='ph ph-spinner-gap ph-spin' style='margin-right: 8px;'></i> Procesando...";
             btnGuardar.disabled = true;
 
             try {
@@ -319,14 +325,13 @@ document.addEventListener("DOMContentLoaded", () => {
                     alert("✅ ¡Expediente procesado con éxito en la Matriz!");
                     location.reload(); 
                 } else {
-                    // Muestra la alerta si es un duplicado o error del servidor
                     alert("❌ Rechazado por la Matriz: " + result.detail);
                 }
             } catch (error) {
                 console.error("Error al guardar:", error);
                 alert("⚠️ No se pudo conectar con los servidores centrales.");
             } finally {
-                btnGuardar.innerText = "💾 Guardar Expediente";
+                btnGuardar.innerHTML = "<i class='ph ph-floppy-disk' style='margin-right: 8px;'></i> Guardar Expediente";
                 btnGuardar.disabled = false;
             }
         });
@@ -338,14 +343,12 @@ document.addEventListener("DOMContentLoaded", () => {
 // =====================================================================
 
 window.prepararEdicion = function(id) {
-    // 1. Buscamos el libro en la memoria global
     const libro = window.catalogoGlobal.find(l => l.id === id);
     if (!libro) {
         alert("⚠️ No se encontró el expediente en la memoria.");
         return;
     }
     
-    // 2. Rellenamos el formulario con los datos existentes
     document.getElementById('form-id').value = libro.id;
     document.getElementById('form-titulo').value = libro.titulo || '';
     document.getElementById('form-autor').value = libro.autor || '';
@@ -358,15 +361,15 @@ window.prepararEdicion = function(id) {
     document.getElementById('form-resumen').value = libro.observaciones || '';
     document.getElementById('form-calificacion').value = libro.calificacion || 0;
     document.getElementById('form-estado').value = libro.estado_lectura || 'No iniciado';
-    // 3. Cambiamos el texto del botón
-    document.getElementById('btn-guardar-libro').innerText = "🔄 Actualizar Expediente";
     
-    // 4. Abrimos el modal
+    // Cambiamos el texto del botón usando HTML e Ícono
+    document.getElementById('btn-guardar-libro').innerHTML = "<i class='ph ph-arrows-clockwise' style='margin-right: 8px;'></i> Actualizar Expediente";
+    
     const modal = document.getElementById('modal-ingreso');
     if (modal) {
         modal.style.display = "flex";
     } else {
-        alert("⚠️ Error: El contenedor del formulario no existe. Verifica que su ID sea 'modal-ingreso' en el HTML.");
+        alert("⚠️ Error: El contenedor del formulario no existe.");
     }
 };
 

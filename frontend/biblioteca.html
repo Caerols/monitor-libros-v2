@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mi Biblioteca Personal | Matriz Central</title>
+    <!-- Íconos Phosphor (Modernos y vectoriales) -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/biblioteca.css">
 </head>
@@ -11,49 +13,54 @@
     <div class="app-layout">
         <!-- SUBMENÚ LATERAL -->
         <aside class="sidebar">
-            <div class="sidebar-header" style="display: flex; justify-content: space-between; align-items: center;">
-                <h2 style="margin: 0;">Matriz Central</h2>
-                <!-- Botón Hamburguesa (Oculto en PC, visible en móvil) -->
-                <button class="btn-menu-mobile" onclick="document.getElementById('nav-menu').classList.toggle('show-menu')" style="background: none; border: none; color: white; font-size: 28px; cursor: pointer;">☰</button>
+            <div class="sidebar-header">
+                <h2>Matriz Central</h2>
+                <!-- Botón Hamburguesa -->
+                <button class="btn-menu-mobile" onclick="document.getElementById('nav-menu').classList.toggle('show-menu')">
+                    <i class="ph ph-list"></i>
+                </button>
             </div>
             <nav class="sidebar-nav" id="nav-menu">
                 <p class="nav-section">Módulo Principal</p>
-                <a href="index.html" class="nav-link">📊 Ofertas e Historial</a>
+                <a href="index.html" class="nav-link"><i class="ph ph-chart-line-up" style="margin-right: 8px;"></i> Ofertas e Historial</a>
                 
                 <p class="nav-section">Mi Biblioteca</p>
-                <a href="biblioteca.html" class="nav-link">📚 Catálogo</a>
-                <a href="estadisticas.html" class="nav-link">📈 Estadísticas</a>
-                <a href="logros.html" class="nav-link">🏆 Logros</a>
+                <a href="biblioteca.html" class="nav-link active"><i class="ph ph-books" style="margin-right: 8px;"></i> Catálogo</a>
+                <a href="estadisticas.html" class="nav-link"><i class="ph ph-chart-pie-slice" style="margin-right: 8px;"></i> Estadísticas</a>
+                <a href="logros.html" class="nav-link"><i class="ph ph-trophy" style="margin-right: 8px;"></i> Logros</a>
             </nav>
         </aside>
 
         <!-- CONTENIDO PRINCIPAL -->
         <main class="main-content">
             <header class="dashboard-header">
-                <h1>📚 Catálogo de Libros</h1>
-                <p>Tu colección personal. Pasa el ratón sobre un libro para ver sus detalles.</p>
+                <h1>Catálogo de Libros</h1>
+                <p>Tu colección personal. Pasa el cursor sobre un expediente para visualizar la información clasificada.</p>
             </header>
             
-           <!-- BOTÓN PARA AGREGAR LIBRO (Abre el Modal) -->
-            <div style="margin-bottom: 20px; text-align: right;">
-                <button class="btn-primario" onclick="document.getElementById('form-id').value=''; document.getElementById('form-titulo').value=''; document.getElementById('form-autor').value=''; document.getElementById('form-genero').value=''; document.getElementById('form-anio').value=''; document.getElementById('form-isbn').value=''; document.getElementById('form-editorial').value=''; document.getElementById('form-paginas').value=''; document.getElementById('form-palabras').value=''; document.getElementById('form-resumen').value=''; document.getElementById('form-estado').value='No iniciado'; document.getElementById('form-calificacion').value='0'; document.getElementById('btn-guardar-libro').innerText='💾 Guardar Expediente en la Matriz'; document.getElementById('modal-ingreso').style.display='flex';">+ Ingresar Nuevo Expediente</button>
+            <!-- BOTÓN PARA AGREGAR LIBRO -->
+            <div style="margin-bottom: 30px; text-align: right;">
+                <button class="btn-primario" onclick="document.getElementById('form-id').value=''; document.getElementById('form-titulo').value=''; document.getElementById('form-autor').value=''; document.getElementById('form-genero').value=''; document.getElementById('form-anio').value=''; document.getElementById('form-isbn').value=''; document.getElementById('form-editorial').value=''; document.getElementById('form-paginas').value=''; document.getElementById('form-palabras').value=''; document.getElementById('form-resumen').value=''; document.getElementById('form-estado').value='No iniciado'; document.getElementById('form-calificacion').value='0'; document.getElementById('btn-guardar-libro').innerHTML='<i class=\'ph ph-floppy-disk\' style=\'margin-right: 8px;\'></i> Guardar Expediente'; document.getElementById('modal-ingreso').style.display='flex';">
+                    <i class="ph ph-plus-circle" style="margin-right: 5px;"></i> Nuevo Expediente
+                </button>
             </div>
 
-            <!-- MODAL DE INGRESO / EDICIÓN (Oculto por defecto, capa flotante) -->
-            <div id="modal-ingreso" style="display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,15,0.8); justify-content: center; align-items: center;">
-                <div style="background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 650px; max-height: 90vh; overflow-y: auto; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+            <!-- MODAL DE INGRESO / EDICIÓN (ADAPTADO A MODO OSCURO) -->
+            <div id="modal-ingreso" style="display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(11, 17, 32, 0.9); justify-content: center; align-items: center; backdrop-filter: blur(4px);">
+                <!-- Contenedor del Modal: Usa las variables CSS globales -->
+                <div style="background: var(--bg-panel); padding: 30px; border-radius: 12px; width: 90%; max-width: 650px; max-height: 90vh; overflow-y: auto; position: relative; box-shadow: 0 20px 50px rgba(0,0,0,0.5); border: 1px solid var(--borde-fino);">
                     
                     <!-- Botón Cerrar (X) -->
-                    <span onclick="document.getElementById('modal-ingreso').style.display='none';" style="position: absolute; right: 20px; top: 15px; cursor: pointer; font-size: 28px; font-weight: bold; color: #333;">&times;</span>
+                    <span onclick="document.getElementById('modal-ingreso').style.display='none';" style="position: absolute; right: 20px; top: 15px; cursor: pointer; font-size: 28px; font-weight: bold; color: var(--texto-mutado); transition: color 0.2s;" onmouseover="this.style.color='var(--neon-rojo)'" onmouseout="this.style.color='var(--texto-mutado)'">&times;</span>
                     
-                    <h2 style="margin-top: 0; color: #1a237e;">📝 Ingresar / Editar Expediente</h2>
+                    <h2 style="margin-top: 0; color: var(--texto-brillante); border-bottom: 1px solid var(--borde-fino); padding-bottom: 15px; margin-bottom: 20px;"><i class="ph ph-file-text" style="color: var(--neon-cyan); margin-right: 8px;"></i> Editor de Expediente</h2>
                     
                     <div class="formulario-grid">
                         <!-- Datos Básicos -->
                         <div class="form-grupo">
                             <label>Título del libro *</label>
                             <input type="text" id="form-titulo" placeholder="Ej: La metamorfosis">
-                            <input type="hidden" id="form-id"> <!-- Oculto, ID para base de datos -->
+                            <input type="hidden" id="form-id"> 
                         </div>
                         <div class="form-grupo">
                             <label>Autor *</label>
@@ -61,9 +68,9 @@
                         </div>
                         
                         <!-- El Botón Mágico -->
-                        <div class="form-grupo" style="grid-column: 1 / -1; text-align: center;">
-                            <button id="btn-autocompletar" class="btn-magico">✨ Autocompletar Ficha Técnica</button>
-                            <span id="mensaje-investigacion" style="margin-left: 10px; font-size: 13px; font-weight: bold;"></span>
+                        <div class="form-grupo" style="grid-column: 1 / -1; text-align: center; margin: 10px 0;">
+                            <button id="btn-autocompletar" class="btn-magico"><i class="ph ph-magic-wand" style="margin-right: 8px;"></i> Autocompletar Ficha Técnica</button>
+                            <div id="mensaje-investigacion" style="margin-top: 10px; font-size: 13px; font-weight: 500;"></div>
                         </div>
 
                         <!-- Datos Técnicos -->
@@ -72,11 +79,11 @@
                             <input type="text" id="form-genero" placeholder="Ej: Ficción / Distopía">
                         </div>
                         <div class="form-grupo">
-                            <label>Año original</label>
+                            <label>Año de Publicación Original</label>
                             <input type="number" id="form-anio" placeholder="Ej: 1915">
                         </div>
                         <div class="form-grupo">
-                            <label>ISBN (Para futura portada)</label>
+                            <label>ISBN (Para extraer portada)</label>
                             <input type="text" id="form-isbn" placeholder="Ej: 9788437604947">
                         </div>
                         <div class="form-grupo">
@@ -89,13 +96,13 @@
                         </div>
                         <div class="form-grupo">
                             <label>Palabras (Estimado)</label>
-                            <input type="number" id="form-palabras" readonly style="background-color: #f5f5f5; cursor: not-allowed;">
+                            <input type="number" id="form-palabras" readonly style="background-color: var(--bg-abismo); cursor: not-allowed; color: var(--texto-mutado); opacity: 0.7;">
                         </div>
 
                         <!-- Estado de Lectura -->
                         <div class="form-grupo">
                             <label>Estado de Lectura</label>
-                            <select id="form-estado" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-family: inherit;">
+                            <select id="form-estado">
                                 <option value="No iniciado">No iniciado</option>
                                 <option value="En lectura">En lectura</option>
                                 <option value="Pendiente">Pendiente</option>
@@ -106,38 +113,40 @@
                         <!-- Calificación -->
                         <div class="form-grupo">
                             <label>Calificación (Estrellas)</label>
-                            <select id="form-calificacion" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-family: inherit;">
+                            <select id="form-calificacion">
                                 <option value="0">Sin calificar</option>
-                                <option value="1">⭐ (1) Malo</option>
-                                <option value="2">⭐⭐ (2) Regular</option>
-                                <option value="3">⭐⭐⭐ (3) Bueno</option>
-                                <option value="4">⭐⭐⭐⭐ (4) Muy Bueno</option>
-                                <option value="5">⭐⭐⭐⭐⭐ (5) Obra Maestra</option>
+                                <option value="1">1 Estrella - Malo</option>
+                                <option value="2">2 Estrellas - Regular</option>
+                                <option value="3">3 Estrellas - Bueno</option>
+                                <option value="4">4 Estrellas - Muy Bueno</option>
+                                <option value="5">5 Estrellas - Obra Maestra</option>
                             </select>
                         </div>
                         
                         <!-- Resumen / Contexto -->
                         <div class="form-grupo" style="grid-column: 1 / -1;">
                             <label>Contexto de la época / Epílogo</label>
-                            <textarea id="form-resumen" rows="4" placeholder="Notas sobre la obra, su impacto o tu opinión..."></textarea>
+                            <textarea id="form-resumen" rows="4" placeholder="Notas sobre la obra, su impacto o tu opinión clasificada..."></textarea>
                         </div>
 
                         <!-- BOTÓN DE GUARDADO FINAL -->
-                        <div class="form-grupo" style="grid-column: 1 / -1; margin-top: 10px;">
-                            <button id="btn-guardar-libro" class="btn-primario" style="width: 100%; font-size: 16px; padding: 12px; background: #2e7d32;">💾 Guardar Expediente en la Matriz</button>
+                        <div class="form-grupo" style="grid-column: 1 / -1; margin-top: 15px;">
+                            <button id="btn-guardar-libro" class="btn-primario" style="width: 100%; font-size: 16px; padding: 14px; background: rgba(16, 185, 129, 0.1); border: 1px solid var(--neon-verde); color: var(--neon-verde);">
+                                <i class="ph ph-floppy-disk" style="margin-right: 8px;"></i> Guardar Expediente en la Matriz
+                            </button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- CUADRÍCULA DEL CATÁLOGO (Vacía, JS inyectará las tarjetas aquí) -->
+            <!-- CUADRÍCULA DEL CATÁLOGO -->
             <section class="catalogo-grid" id="catalogo-container">
-                <!-- Se dibuja dinámicamente -->
+                <!-- Se dibuja dinámicamente desde JS -->
             </section>
         </main>
     </div>
     
     <!-- Rompedor de Caché integrado para evitar cargar JS antiguos -->
-    <script src="js/biblioteca.js?v=3"></script>
+    <script src="js/biblioteca.js?v=4"></script>
 </body>
 </html>

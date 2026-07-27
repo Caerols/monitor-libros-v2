@@ -22,14 +22,17 @@ document.addEventListener("DOMContentLoaded", () => {
             const loader = document.getElementById('loader');
             if (loader) loader.style.display = 'none';
             
-            // Asegurar que leemos bien el JSON (ya sea un array directo o un objeto)
+            // Asegurar que leemos bien el JSON
             const historial = Array.isArray(data) ? data : data.historial;
             
             if (!historial || historial.length === 0) {
                 const alertaBox = document.getElementById('alertaInteligente');
                 if (alertaBox) {
                     alertaBox.style.display = 'block';
-                    alertaBox.innerHTML = '⚠️ No hay datos registrados en el archivo todavía. Asegúrate de que el scraper haya finalizado su barrido.';
+                    alertaBox.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
+                    alertaBox.style.border = '1px solid var(--neon-rojo)';
+                    alertaBox.style.color = 'var(--neon-rojo)';
+                    alertaBox.innerHTML = '<i class="ph ph-warning-circle" style="margin-right:8px;"></i> No hay datos registrados en el archivo todavía. Asegúrate de que el scraper haya finalizado su barrido.';
                 }
                 return;
             }
@@ -62,8 +65,10 @@ document.addEventListener("DOMContentLoaded", () => {
             console.error("Error al cargar la API:", error);
             const loader = document.getElementById('loader');
             if (loader) {
-                loader.style.color = '#dc3545';
-                loader.innerHTML = '❌ Error de conexión. La Bibliotecaria podría estar reiniciando sus sistemas. Intenta actualizar la página en unos segundos.';
+                loader.style.color = 'var(--neon-rojo)';
+                loader.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
+                loader.style.border = '1px solid var(--neon-rojo)';
+                loader.innerHTML = '<i class="ph ph-x-circle" style="font-size: 38px; margin-bottom: 15px; display: inline-block;"></i><br>Error de conexión. La Bibliotecaria podría estar reiniciando sus sistemas.';
             }
         });
 
@@ -77,6 +82,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    // ACTIALIZACIÓN: Pasamos el libro y la lista a la función del Analista
     function actualizarDashboard(libroSeleccionado) {
         let librosAMostrar = libroSeleccionado === "Todos" 
             ? Object.keys(datosGlobales) 
@@ -84,15 +90,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
         dibujarTarjetas(librosAMostrar);
         dibujarGrafico(librosAMostrar);
-        generarPrediccion();
+        generarPrediccion(libroSeleccionado, librosAMostrar); 
     }
 
     function dibujarTarjetas(libros) {
-        // Conectamos con el ID exacto del HTML nuevo
         const contenedor = document.getElementById('kpi-container'); 
         if (!contenedor) return;
         
-        contenedor.innerHTML = ''; // Limpiar tarjetas anteriores
+        contenedor.innerHTML = ''; 
         contenedor.style.display = 'flex';
         contenedor.style.flexWrap = 'wrap';
         contenedor.style.gap = '20px';
@@ -102,57 +107,139 @@ document.addEventListener("DOMContentLoaded", () => {
             const ultimaFecha = fechasGlobales[fechasGlobales.length - 1];
             const precioActual = datos.precios[ultimaFecha];
 
-            if (!precioActual) return; // Si justo ese libro no tiene precio hoy, lo salta
+            if (!precioActual) return;
 
             // Lógica del Semáforo
             let claseEstado = '';
             let textoEstado = '';
 
             if (precioActual <= datos.min) {
-                claseEstado = 'tendencia-baja'; // Clase CSS verde
-                textoEstado = '🟢 Mínimo Histórico - ¡Comprar!';
+                claseEstado = 'tendencia-baja'; 
+                textoEstado = '<i class="ph-fill ph-check-circle" style="margin-right: 5px;"></i> Mínimo Histórico - ¡Comprar!';
             } else if (precioActual >= datos.max && datos.max !== datos.min) {
-                claseEstado = 'tendencia-alta'; // Clase CSS roja
-                textoEstado = '🔴 Precio Máximo - Esperar';
+                claseEstado = 'tendencia-alta'; 
+                textoEstado = '<i class="ph-fill ph-warning" style="margin-right: 5px;"></i> Precio Máximo - Esperar';
             } else {
                 claseEstado = '';
-                textoEstado = '🟡 Precio Promedio - Observar';
+                textoEstado = '<i class="ph-fill ph-eye" style="color: var(--neon-ambar); margin-right: 5px;"></i> Precio Promedio - Observar';
             }
 
             const tarjeta = `
                 <div class="kpi-card">
                     <h3>${titulo}</h3>
                     <p class="${claseEstado}">${formatearDinero(precioActual)}</p>
-                    <div style="font-size: 13px; color: #666; margin-top: 10px;">Mejor precio: ${formatearDinero(datos.min)}</div>
-                    <div style="font-size: 13px; margin-top: 5px; font-weight: bold;">${textoEstado}</div>
+                    <div style="font-size: 13px; color: var(--texto-mutado); margin-top: 10px;">Mejor precio: ${formatearDinero(datos.min)}</div>
+                    <div style="font-size: 13px; margin-top: 8px; font-weight: 600; color: var(--texto-base);">${textoEstado}</div>
                 </div>
             `;
             contenedor.innerHTML += tarjeta;
         });
     }
 
-    function generarPrediccion() {
+    // EL NUEVO CEREBRO DEL ANALISTA INTELIGENTE
+    function generarPrediccion(libroSeleccionado, libros) {
         const alertaBox = document.getElementById('alertaInteligente');
         if (!alertaBox) return;
         
         const cantidadDias = fechasGlobales.length;
+        const ultimaFecha = fechasGlobales[fechasGlobales.length - 1];
 
-        // Le damos estilo vía JS para no depender del CSS
         alertaBox.style.padding = '15px';
-        alertaBox.style.marginBottom = '20px';
+        alertaBox.style.marginBottom = '25px';
         alertaBox.style.borderRadius = '8px';
         alertaBox.style.display = 'block';
 
-        if (cantidadDias < 7) {
-            alertaBox.style.backgroundColor = '#e7f3fe';
-            alertaBox.style.color = '#31708f';
-            alertaBox.style.border = '1px solid #bce8f1';
-            alertaBox.innerHTML = `🧠 <strong>Fase de Aprendizaje Activa:</strong> Llevas monitoreando ${cantidadDias} día(s). El motor de predicción necesita al menos 7 días de datos reales para soltar info pro.`;
-        } else {
-            alertaBox.style.backgroundColor = '#fff3cd';
-            alertaBox.style.color = '#856404';
-            alertaBox.style.border = '1px solid #ffeeba';
-            alertaBox.innerHTML = `📊 <strong>Análisis activado:</strong> Hay suficientes datos históricos para observar tendencias consistentes.`;
+        // Validar si hay suficientes datos (mínimo 2 días para poder comparar)
+        if (cantidadDias < 2) {
+            alertaBox.style.backgroundColor = 'rgba(6, 182, 212, 0.1)';
+            alertaBox.style.color = 'var(--neon-cyan)';
+            alertaBox.style.border = '1px solid rgba(6, 182, 212, 0.3)';
+            alertaBox.innerHTML = `<i class="ph ph-brain" style="font-size: 18px; vertical-align: middle; margin-right: 8px;"></i> <strong>Fase de Aprendizaje Activa:</strong> Recopilando datos. El motor necesita al menos 2 días de historial para emitir juicios de valor.`;
+            return;
+        }
+
+        // Restablecemos colores por defecto (Ámbar)
+        alertaBox.style.backgroundColor = 'rgba(245, 158, 11, 0.1)';
+        alertaBox.style.color = 'var(--neon-ambar)';
+        alertaBox.style.border = '1px solid rgba(245, 158, 11, 0.3)';
+
+        // ==========================================
+        // 1. REPORTE GLOBAL (Viendo todos los libros)
+        // ==========================================
+        if (libroSeleccionado === "Todos") {
+            let cantidadMinimoHistorico = 0;
+            let mejorDescuento = { titulo: '', porcentaje: 0, ahorro: 0 };
+
+            libros.forEach(titulo => {
+                const datos = datosGlobales[titulo];
+                const precioActual = datos.precios[ultimaFecha];
+                
+                if (!precioActual) return;
+
+                // Si está en el mínimo (y ha variado alguna vez)
+                if (precioActual <= datos.min && datos.min !== datos.max) {
+                    cantidadMinimoHistorico++;
+                }
+
+                // Buscar el descuento más agresivo respecto a su precio máximo
+                const ahorroAbsoluto = datos.max - precioActual;
+                const porcentaje = (datos.max > 0) ? (ahorroAbsoluto / datos.max) * 100 : 0;
+
+                if (porcentaje > mejorDescuento.porcentaje) {
+                    mejorDescuento = { titulo, porcentaje, ahorro: ahorroAbsoluto };
+                }
+            });
+
+            let mensajeHTML = `<i class="ph ph-radar" style="font-size: 18px; vertical-align: middle; margin-right: 8px;"></i> <strong>Reporte de Mercado Global:</strong> `;
+            
+            if (cantidadMinimoHistorico > 0) {
+                mensajeHTML += `Hay <span style="color: var(--neon-verde); font-weight: bold;">${cantidadMinimoHistorico} expediente(s)</span> en su mínimo histórico listo(s) para compra. `;
+            } else {
+                mensajeHTML += `Ningún libro ha tocado fondo histórico hoy. Mantén vigilancia. `;
+            }
+
+            if (mejorDescuento.porcentaje > 0) {
+                mensajeHTML += `<br><span style="margin-left: 28px; font-size: 13px; color: var(--texto-brillante); display: inline-block; margin-top: 5px;">🔥 <strong>Mayor Oportunidad:</strong> <em>'${mejorDescuento.titulo}'</em> tiene un <strong>${Math.round(mejorDescuento.porcentaje)}% de descuento</strong> (Ahorras ${formatearDinero(mejorDescuento.ahorro)} respecto a su peak más caro).</span>`;
+            }
+
+            alertaBox.innerHTML = mensajeHTML;
+        } 
+        // ==========================================
+        // 2. REPORTE INDIVIDUAL (Viendo 1 solo libro)
+        // ==========================================
+        else {
+            const titulo = libroSeleccionado;
+            const datos = datosGlobales[titulo];
+            const precioActual = datos.precios[ultimaFecha];
+            
+            if (!precioActual) return;
+
+            const sobreprecio = precioActual - datos.min;
+            const ahorroDesdeMax = datos.max - precioActual;
+
+            let analisisHTML = `<i class="ph ph-crosshair" style="font-size: 18px; vertical-align: middle; margin-right: 8px;"></i> <strong>Inteligencia de Expediente:</strong> `;
+
+            if (precioActual <= datos.min && datos.max !== datos.min) {
+                // Color verde agresivo para compras claras
+                alertaBox.style.backgroundColor = 'rgba(16, 185, 129, 0.1)';
+                alertaBox.style.color = 'var(--neon-verde)';
+                alertaBox.style.border = '1px solid rgba(16, 185, 129, 0.3)';
+                analisisHTML += `¡Condición ideal detectada! El precio está en el piso histórico. No encontrarás una oportunidad matemática mejor. <strong style="text-transform: uppercase;">Veredicto: Comprar de inmediato.</strong>`;
+            } else if (precioActual >= datos.max && datos.max !== datos.min) {
+                // Color rojo alerta para evitar compras malas
+                alertaBox.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
+                alertaBox.style.color = 'var(--neon-rojo)';
+                alertaBox.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+                analisisHTML += `Mercado saturado. Estás pagando el precio más alto registrado. Si compras hoy, perderías ${formatearDinero(sobreprecio)} respecto a su mejor momento. <strong style="text-transform: uppercase;">Veredicto: Evitar compra y esperar caída.</strong>`;
+            } else if (datos.max === datos.min) {
+                // Precio estático
+                analisisHTML += `El precio de este libro ha estado estático sin variaciones desde que se inició el rastreo. <strong style="text-transform: uppercase;">Veredicto: Sin volatilidad, puedes comprar cuando quieras.</strong>`;
+            } else {
+                // Precio intermedio
+                analisisHTML += `Precio estabilizado a la mitad de su ciclo. Estás pagando un sobreprecio de ${formatearDinero(sobreprecio)} comparado al mínimo, pero ya bajó ${formatearDinero(ahorroDesdeMax)} desde su pico más caro. <strong style="text-transform: uppercase;">Veredicto: Mantener en observación.</strong>`;
+            }
+
+            alertaBox.innerHTML = analisisHTML;
         }
     }
 
@@ -163,16 +250,14 @@ document.addEventListener("DOMContentLoaded", () => {
             chartInstance.destroy();
         }
 
-        // 1. MOTOR DE VOLATILIDAD: Evaluar los libros recibidos
+        Chart.defaults.font.family = "'Inter', Tahoma, Geneva, Verdana, sans-serif";
+        Chart.defaults.color = '#cbd5e1'; 
+
         let librosEvaluados = [];
 
         libros.forEach(titulo => {
             const datos = datosGlobales[titulo];
-            
-            // Si el max y min son iguales (o 0), significa que es un precio plano. Lo descartamos.
             const esPlano = datos.max === datos.min;
-            
-            // Calculamos cuánto varió en total (el "salto" de precio)
             const variacion = datos.max - datos.min;
 
             if (!esPlano) {
@@ -184,32 +269,24 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
 
-        // 2. RANKING Y TOP 5: Si estamos viendo "Todos", mostramos solo el Top 5 más volátil.
-        // Si el usuario eligió un libro específico en el filtro, saltamos este paso.
         let librosParaGraficar = librosEvaluados;
         
         if (libros.length > 1) { 
-            // Ordenar de mayor a menor variación
             librosEvaluados.sort((a, b) => b.variacion - a.variacion);
-            // Quedarse solo con los 5 primeros
             librosParaGraficar = librosEvaluados.slice(0, 5);
         }
 
-        // Si todos los libros del filtro son "planos", detenemos el gráfico para no mostrar algo vacío
         if (librosParaGraficar.length === 0) {
-            console.warn("Todos los precios son estáticos. No hay fluctuaciones para graficar.");
-            // Opcional: Podrías inyectar un texto en el canvas o dejarlo vacío
             return; 
         }
 
-        // 3. PREPARAR DATASETS PARA CHART.JS
         const datasets = librosParaGraficar.map(libroInfo => {
             const titulo = libroInfo.titulo;
             const colorHue = Array.from(titulo).reduce((acc, char) => acc + char.charCodeAt(0), 0) % 360;
-            const colorLindo = `hsl(${colorHue}, 70%, 50%)`;
+            const colorLindo = `hsl(${colorHue}, 80%, 65%)`;
             
             return {
-                label: titulo, // El nombre completo se guarda aquí
+                label: titulo, 
                 data: libroInfo.datosY,
                 borderColor: colorLindo,
                 backgroundColor: colorLindo,
@@ -217,11 +294,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 spanGaps: true,
                 borderWidth: 3,
                 pointRadius: 4,
-                pointHoverRadius: 7
+                pointHoverRadius: 7,
+                pointBackgroundColor: 'var(--bg-tarjeta)',
+                pointBorderWidth: 2
             };
         });
 
-        // 4. DIBUJAR EL GRÁFICO (Con la leyenda trucada)
         chartInstance = new Chart(ctx, {
             type: 'line',
             data: {
@@ -239,11 +317,11 @@ document.addEventListener("DOMContentLoaded", () => {
                     legend: { 
                         position: window.innerWidth < 600 ? 'bottom' : 'top',
                         labels: {
+                            color: '#cbd5e1',
                             boxWidth: window.innerWidth < 600 ? 10 : 40,
                             font: { size: window.innerWidth < 600 ? 10 : 12 },
                             usePointStyle: true,
                             padding: 20,
-                            // MAGIA 1: Acortamos el texto de la leyenda a 35 caracteres
                             generateLabels: function(chart) {
                                 const original = Chart.defaults.plugins.legend.labels.generateLabels;
                                 const labels = original.call(this, chart);
@@ -257,15 +335,19 @@ document.addEventListener("DOMContentLoaded", () => {
                         }
                     },
                     tooltip: {
-                        backgroundColor: 'rgba(26, 35, 126, 0.9)', // Estilo Matriz
-                        titleFont: { size: 14 },
+                        backgroundColor: 'rgba(15, 23, 42, 0.95)', 
+                        borderColor: 'rgba(255, 255, 255, 0.1)',
+                        borderWidth: 1,
+                        titleColor: '#f8fafc',
+                        bodyColor: '#cbd5e1',
+                        titleFont: { size: 14, family: "'Inter', sans-serif" },
+                        padding: 12,
                         callbacks: {
-                            // MAGIA 2: Mostramos el título completo en el tooltip negro
                             title: function(context) {
                                 return context[0].dataset.label; 
                             },
                             label: function(context) {
-                                let label = ''; // Ocultamos el nombre aquí porque ya está en el título del tooltip
+                                let label = ''; 
                                 if (context.parsed.y !== null) {
                                     label += formatearDinero(context.parsed.y);
                                 }
@@ -275,8 +357,14 @@ document.addEventListener("DOMContentLoaded", () => {
                     }
                 },
                 scales: {
+                    x: {
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        border: { display: false }
+                    },
                     y: {
-                        beginAtZero: false, // Permite el zoom dramático en las curvas
+                        beginAtZero: false, 
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        border: { display: false },
                         ticks: {
                             callback: function(value) {
                                 return formatearDinero(value);

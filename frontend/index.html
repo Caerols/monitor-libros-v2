@@ -3,66 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BI - Monitor de Libros | Matriz Central</title>
+    <title>BI - Monitor de Mercado | Matriz Central</title>
+    <!-- Íconos Phosphor -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <link rel="stylesheet" href="css/style.css">
-    <!-- Agregamos el CSS de la biblioteca para heredar el diseño del menú lateral -->
     <link rel="stylesheet" href="css/biblioteca.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div class="app-layout">
         
- <!-- SUBMENÚ LATERAL -->
+        <!-- SUBMENÚ LATERAL -->
         <aside class="sidebar">
-            <div class="sidebar-header" style="display: flex; justify-content: space-between; align-items: center;">
-                <h2 style="margin: 0;">Matriz Central</h2>
-                <!-- Botón Hamburguesa (Oculto en PC, visible en móvil) -->
-                <button class="btn-menu-mobile" onclick="document.getElementById('nav-menu').classList.toggle('show-menu')" style="background: none; border: none; color: white; font-size: 28px; cursor: pointer;">☰</button>
+            <div class="sidebar-header">
+                <h2>Matriz Central</h2>
+                <!-- Botón Hamburguesa -->
+                <button class="btn-menu-mobile" onclick="document.getElementById('nav-menu').classList.toggle('show-menu')">
+                    <i class="ph ph-list"></i>
+                </button>
             </div>
             <nav class="sidebar-nav" id="nav-menu">
                 <p class="nav-section">Módulo Principal</p>
-                <a href="index.html" class="nav-link">📊 Ofertas e Historial</a>
+                <a href="index.html" class="nav-link active"><i class="ph ph-chart-line-up" style="margin-right: 8px;"></i> Ofertas e Historial</a>
                 
                 <p class="nav-section">Mi Biblioteca</p>
-                <a href="biblioteca.html" class="nav-link">📚 Catálogo</a>
-                <a href="estadisticas.html" class="nav-link">📈 Estadísticas</a>
-                <a href="logros.html" class="nav-link">🏆 Logros</a>
+                <a href="biblioteca.html" class="nav-link"><i class="ph ph-books" style="margin-right: 8px;"></i> Catálogo</a>
+                <a href="estadisticas.html" class="nav-link"><i class="ph ph-chart-pie-slice" style="margin-right: 8px;"></i> Estadísticas</a>
+                <a href="logros.html" class="nav-link"><i class="ph ph-trophy" style="margin-right: 8px;"></i> Logros</a>
             </nav>
         </aside>
 
-        <!-- CONTENIDO PRINCIPAL (Tu Dashboard Original) -->
+        <!-- CONTENIDO PRINCIPAL (Dashboard de Ofertas) -->
         <main class="main-content">
             <div class="dashboard-container" style="max-width: 100%; padding: 0;">
+                
                 <header class="dashboard-header">
-                    <h1>📊 Decisiones de Compra</h1>
-                    <p>Dashboard de Inteligencia de Negocios y Archivo</p>
+                    <h1><i class="ph ph-radar" style="color: var(--neon-cyan); margin-right: 10px;"></i> Decisiones de Compra</h1>
+                    <p>Monitor de Inteligencia de Negocios y Rastreo de Precios</p>
                 </header>
 
-                <!-- Controles y Filtros -->
-                <section class="panel-control">
-                    <label for="filtroLibro">📚 Analizar libro:</label>
+                <!-- Controles y Filtros (Estilo Terminal) -->
+                <section class="panel-control" style="text-align: left; background: var(--bg-tarjeta); padding: 25px; border-radius: 12px; border: 1px solid var(--borde-fino); box-shadow: 0 10px 30px rgba(0,0,0,0.3); border-top: 2px solid var(--neon-cyan); margin-bottom: 25px;">
+                    <label for="filtroLibro" style="display: block; margin-bottom: 12px; color: var(--texto-mutado); font-weight: 600; text-transform: uppercase; font-size: 13px; letter-spacing: 1px;">
+                        <i class="ph ph-magnifying-glass" style="margin-right: 5px;"></i> Analizar Expediente de Mercado:
+                    </label>
                     <select id="filtroLibro" class="select-moderno">
-                        <option value="Todos">Vista General (Todos los libros)</option>
+                        <option value="Todos">Vista General (Todos los expedientes rastreados)</option>
                     </select>
                 </section>
 
                 <!-- Motor de Predicciones -->
                 <section id="alertaInteligente" class="alerta oculta" aria-live="polite"></section>
 
-                <!-- Mensaje de Carga -->
-                <div id="loader" class="loader-activo">
-                    ⏳ Conectando con los servidores centrales en la nube...
+                <!-- Mensaje de Carga (Estilo Hacker) -->
+                <div id="loader" class="loader-activo" style="text-align: center; padding: 50px 20px; color: var(--texto-mutado); font-weight: 500; background: var(--bg-tarjeta); border-radius: 12px; margin-bottom: 25px; border: 1px dashed var(--borde-fino);">
+                    <i class="ph ph-spinner-gap ph-spin" style="font-size: 38px; color: var(--neon-cyan); margin-bottom: 15px; display: inline-block;"></i>
+                    <br>Interceptando señales de mercado...
                 </div>
 
                 <!-- Tarjetas de Resumen (KPIs) -->
-                <section id="kpi-container" style="display: none;">
-                    <!-- Se llenan por JS -->
+                <section id="kpi-container" class="kpi-grid" style="display: none;">
+                    <!-- Se llenan por JS (main.js) -->
                 </section>
 
-                <!-- Gráfico Principal -->
-                <main class="chart-box">
-                    <canvas id="graficoPrecios"></canvas>
-                </main>
+                <!-- Gráfico Principal (Adaptado a la Matriz Profunda) -->
+                <div class="chart-box" style="margin-top: 10px;">
+                    <h3 style="text-align: left; margin-bottom: 20px; color: var(--texto-brillante); font-size: 16px; font-weight: 600; border-bottom: 1px solid var(--borde-fino); padding-bottom: 15px;">
+                        <i class="ph ph-trend-up" style="color: var(--neon-verde); margin-right: 8px;"></i> Fluctuación Histórica de Precios
+                    </h3>
+                    <div class="chart-wrapper">
+                        <canvas id="graficoPrecios"></canvas>
+                    </div>
+                </div>
+
             </div>
         </main>
         
