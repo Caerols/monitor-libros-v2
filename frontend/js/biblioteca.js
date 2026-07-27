@@ -4,23 +4,19 @@
 window.catalogoGlobal = []; 
 
 window.buscarPortadaAlternativa = async function(imgElement, isbn, titulo, autor) {
-    // 1. Apagamos el onerror para evitar un loop infinito si Google también falla
     imgElement.onerror = function() {
-        this.style.display = 'none'; // Si falla todo, mostramos fondo oscuro
+        this.style.display = 'none'; 
     };
 
     try {
-        // Intento 1: Buscar en Google Books por ISBN
         let response = await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`);
         let data = await response.json();
 
         if (data.items && data.items.length > 0 && data.items[0].volumeInfo.imageLinks) {
-            // Google devuelve HTTP, forzamos HTTPS
             imgElement.src = data.items[0].volumeInfo.imageLinks.thumbnail.replace('http:', 'https:');
             return;
         }
 
-        // Intento 2: Buscar en Google Books por Título y Autor
         const query = encodeURIComponent(`${titulo} ${autor}`);
         response = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${query}&maxResults=1`);
         data = await response.json();
@@ -30,7 +26,6 @@ window.buscarPortadaAlternativa = async function(imgElement, isbn, titulo, autor
             return;
         }
 
-        // Si Google Books tampoco tiene NADA, ocultamos la imagen
         imgElement.style.display = 'none';
 
     } catch (error) {
@@ -61,7 +56,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     };
 
-    // Generador de estrellas usando Phosphor Icons en tono Neón Ámbar
     const generarEstrellas = (calificacion) => {
         if (!calificacion || calificacion === 0) return "<span style='color: var(--texto-mutado); font-size: 12px;'>Sin calificar</span>";
         let starsHTML = "";
@@ -71,7 +65,6 @@ document.addEventListener("DOMContentLoaded", () => {
         return starsHTML;
     };
 
-    // Extraer datos de la API y dibujar tarjetas
     fetch(API_URL)
         .then(response => {
             if (!response.ok) throw new Error("Fallo en la comunicación con la matriz central");
@@ -79,8 +72,6 @@ document.addEventListener("DOMContentLoaded", () => {
         })
         .then(data => {
             const catalogo = data.catalogo;
-            
-            // Guardamos los datos en la variable global
             window.catalogoGlobal = catalogo; 
             
             if (!catalogo || catalogo.length === 0) {
@@ -95,7 +86,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
             contenedorCatalogo.innerHTML = '';
 
-            // Generar tarjetas dinámicamente
             catalogo.forEach(libro => {
                 const claseEstado = obtenerClaseEstado(libro.estado_lectura);
                 const precioTexto = formatearDinero(libro.precio_pagado);
@@ -103,12 +93,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 const observaciones = libro.observaciones ? `<em style="color: var(--texto-base);">"${libro.observaciones}"</em>` : "<em style='color: var(--texto-mutado);'>Sin anotaciones.</em>";
 
                 // =========================================================
-                // MAGIA DE LAS PORTADAS (OpenLibrary -> Google Books Fallback)
+                // CORRECCIÓN: height al 60% para dejar espacio a los textos
                 // =========================================================
                 const isbnLimpio = libro.isbn ? String(libro.isbn).replace(/[^0-9X]/gi, '') : '';
                 
                 let portadaHTML = `
-                    <div class="portada-placeholder" style="background: var(--bg-input); color: var(--texto-mutado); display: flex; align-items: center; justify-content: center; height: 100%;">
+                    <div class="portada-placeholder" style="background: var(--bg-input); color: var(--texto-mutado); display: flex; align-items: center; justify-content: center; height: 60%;">
                         <span style="padding: 15px; text-align: center;">${libro.titulo}</span>
                     </div>`;
                 
@@ -118,12 +108,12 @@ document.addEventListener("DOMContentLoaded", () => {
                     const autorEscapado = libro.autor.replace(/'/g, "\\'");
                     
                     portadaHTML = `
-                        <div class="portada-placeholder" style="position: relative; overflow: hidden; padding: 0; background: var(--bg-input); height: 100%;">
+                        <div class="portada-placeholder" style="position: relative; overflow: hidden; padding: 0; background: var(--bg-input); height: 60%;">
                             <!-- Capa 1: Texto de respaldo -->
                             <div style="position: absolute; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; padding: 15px; box-sizing: border-box; text-align: center; color: var(--texto-mutado);">
                                 <span>${libro.titulo}</span>
                             </div>
-                            <!-- Capa 2: Imagen real. Fondo transparente/abismo -->
+                            <!-- Capa 2: Imagen real -->
                             <img src="${urlImagen}" 
                                  alt="Portada de ${libro.titulo}"
                                  style="width: 100%; height: 100%; object-fit: contain; position: relative; z-index: 10; background-color: var(--bg-abismo);"
@@ -162,13 +152,11 @@ document.addEventListener("DOMContentLoaded", () => {
                                     <li><strong style="color: var(--texto-mutado);">Palabras:</strong> ${libro.palabras || Math.round((libro.num_paginas || 0) * 250)}</li>
                                 </ul>
                                 
-                                <!-- Caja de texto con Scroll Inteligente -->
                                 <div class="book-observaciones" style="flex: 1 1 auto; overflow-y: auto; min-height: 0; margin-top: 10px; border-top: 1px dashed var(--borde-fino); padding-top: 10px; margin-bottom: 15px; padding-right: 5px; font-size: 13px;">
                                     <strong style="color: var(--texto-mutado);">Contexto / Epílogo:</strong><br>
                                     ${observaciones}
                                 </div>
 
-                                <!-- Contenedor de Botones (Estilo Neón) -->
                                 <div style="flex-shrink: 0; margin-top: auto;">
                                     <button class="btn-editar" onclick="prepararEdicion(${libro.id})" style="width: 100%; padding: 10px; background-color: rgba(245, 158, 11, 0.1); color: var(--neon-ambar); border: 1px solid var(--neon-ambar); border-radius: 6px; cursor: pointer; font-weight: 600; margin-bottom: 8px; transition: background 0.3s;">
                                         <i class="ph ph-pencil-simple" style="margin-right: 5px;"></i> Editar Expediente
@@ -362,7 +350,6 @@ window.prepararEdicion = function(id) {
     document.getElementById('form-calificacion').value = libro.calificacion || 0;
     document.getElementById('form-estado').value = libro.estado_lectura || 'No iniciado';
     
-    // Cambiamos el texto del botón usando HTML e Ícono
     document.getElementById('btn-guardar-libro').innerHTML = "<i class='ph ph-arrows-clockwise' style='margin-right: 8px;'></i> Actualizar Expediente";
     
     const modal = document.getElementById('modal-ingreso');
