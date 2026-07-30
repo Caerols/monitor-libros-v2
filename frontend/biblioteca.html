@@ -8,6 +8,8 @@
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/biblioteca.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0b1120">
 </head>
 <body>
     <div class="app-layout">
@@ -148,5 +150,14 @@
     
     <!-- Rompedor de Caché integrado para evitar cargar JS antiguos -->
     <script src="js/biblioteca.js?v=4"></script>
+    <script>
+    if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js')
+        .then(registration => console.log('Matriz conectada al ServiceWorker', registration.scope))
+        .catch(error => console.log('Fallo en la conexión del ServiceWorker', error));
+    });
+  }
+</script>
 </body>
 </html>

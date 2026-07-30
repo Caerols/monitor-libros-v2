@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Estadísticas | Matriz Central</title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0b1120">
 </head>
 <body>
     <div class="app-layout">
@@ -145,5 +147,14 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Tu script de estadísticas -->
     <script src="js/estadisticas.js"></script>
+    <script>
+    if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js')
+        .then(registration => console.log('Matriz conectada al ServiceWorker', registration.scope))
+        .catch(error => console.log('Fallo en la conexión del ServiceWorker', error));
+    });
+  }
+</script>
 </body>
 </html>
