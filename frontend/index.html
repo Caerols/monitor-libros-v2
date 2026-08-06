@@ -18,6 +18,17 @@
     <!-- Ícono exclusivo para iPhone/iPad (iOS) -->
     <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
     <meta name="theme-color" content="#0b1120">
+    
+    <!-- CSS Inyectado para la animación de carga -->
+    <style>
+        @keyframes spin-matrix {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .spinner-icon.active {
+            animation: spin-matrix 1.2s linear infinite !important;
+        }
+    </style>
 </head>
 <body>
     <div class="app-layout">
@@ -64,10 +75,10 @@
                 <!-- Motor de Predicciones -->
                 <section id="alertaInteligente" class="alerta oculta" aria-live="polite"></section>
 
-                <!-- Mensaje de Carga (Estilo Hacker) -->
-                <div id="loader" class="loader-activo" style="text-align: center; padding: 50px 20px; color: var(--texto-mutado); font-weight: 500; background: var(--bg-tarjeta); border-radius: 12px; margin-bottom: 25px; border: 1px dashed var(--borde-fino);">
-                    <i class="ph ph-spinner-gap ph-spin" style="font-size: 38px; color: var(--neon-cyan); margin-bottom: 15px; display: inline-block;"></i>
-                    <br>Interceptando señales de mercado...
+                <!-- Mensaje de Carga (Estilo Hacker Interactivo) -->
+                <div id="loader" class="loader-activo card loading-card" style="text-align: center; padding: 50px 20px; background: var(--bg-tarjeta); border-radius: 12px; margin-bottom: 25px; border: 1px dashed var(--borde-fino); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 180px;">
+                    <i class="ph ph-spinner-gap spinner-icon active" id="results-loading-spinner" style="font-size: 38px; color: var(--neon-cyan); margin-bottom: 15px; text-shadow: 0 0 10px rgba(13, 219, 219, 0.5);"></i>
+                    <p id="loading-message-text" style="color: var(--texto-mutado); font-weight: 500; margin: 0;">Iniciando interceptación de señales...</p>
                 </div>
 
                 <!-- Tarjetas de Resumen (KPIs) -->
@@ -92,14 +103,44 @@
 
     <!-- Lógica de la aplicación -->
     <script src="js/main.js"></script>
+    
+    <!-- Script de PWA y Motor de Carga Interactivo -->
     <script>
-    if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js')
-        .then(registration => console.log('Matriz conectada al ServiceWorker', registration.scope))
-        .catch(error => console.log('Fallo en la conexión del ServiceWorker', error));
-    });
-  }
-</script>
+        // 1. Registro del Service Worker (PWA)
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                .then(registration => console.log('Matriz conectada al ServiceWorker', registration.scope))
+                .catch(error => console.log('Fallo en la conexión del ServiceWorker', error));
+            });
+        }
+
+        // 2. Lógica del texto rotativo de carga
+        document.addEventListener("DOMContentLoaded", () => {
+            const loadingMessages = [
+                'Interceptando señales de mercado...',
+                'Filtrando datos de proveedores locales...',
+                'Verificando inventarios globales...',
+                'Comparando fluctuaciones de precios...',
+                'Analizando tendencias de mercado...',
+                'Calculando puntos de decisión...'
+            ];
+
+            let messageIndex = 0;
+            const messageElement = document.getElementById('loading-message-text');
+
+            function cycleLoadingMessages() {
+                // Solo cambiar el texto si el elemento existe y el loader está visible
+                if (messageElement && document.getElementById('loader').style.display !== 'none') {
+                    messageElement.innerText = loadingMessages[messageIndex];
+                    messageIndex = (messageIndex + 1) % loadingMessages.length;
+                }
+            }
+
+            // Iniciar ciclo de mensajes
+            cycleLoadingMessages();
+            setInterval(cycleLoadingMessages, 2500); 
+        });
+    </script>
 </body>
 </html>

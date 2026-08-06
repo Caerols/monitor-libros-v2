@@ -606,3 +606,15 @@ canvas {
     color: var(--neon-ambar);
     border-color: rgba(245, 158, 11, 0.3);
 }
+/* =====================================================================
+   MATRIZ PROFUNDA - ANIMACIONES DE CARGA
+   ===================================================================== */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Aplica esta clase a cualquier ícono que quieras que gire sin parar */
+.spinner-icon.active {
+    animation: spin 1s linear infinite; /* 1 segundo por vuelta, giro suave, infinito */
+}
