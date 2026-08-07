@@ -9,6 +9,8 @@ import asyncio
 from fastapi import FastAPI
 import uvicorn
 import threading
+from pydantic import BaseModel
+from typing import Optional
 
 # Cargar el token desde tu archivo .env
 load_dotenv()
@@ -30,7 +32,10 @@ app.add_middleware(
 def home():
     return {"status": "La Bibliotecaria está en línea y vigilando los archivos."}
 
-# Tu API fusionada aquí mismo
+# =====================================================================
+# RUTAS DE LA API (FRONTEND VERCEL)
+# =====================================================================
+
 @app.get("/api/historial")
 def obtener_historial():
     """Endpoint que devuelve el historial de precios de todos los libros para el frontend"""
@@ -58,6 +63,94 @@ def obtener_historial():
         cursor.close()
         conn.close()
 
+# --- MODELO DE DATOS PARA RECIBIR INFO DE VERCEL ---
+class DatosLibro(BaseModel):
+    id: Optional[int] = None
+    titulo: str
+    autor: str
+    genero: Optional[str] = ""
+    anio_publicacion: Optional[str] = ""
+    isbn: Optional[str] = ""
+    editorial: Optional[str] = ""
+    num_paginas: Optional[int] = 0
+    palabras: Optional[int] = 0
+    observaciones: Optional[str] = ""
+    estado_lectura: str
+    calificacion: Optional[int] = 0
+
+# --- NUEVAS RUTAS PARA EL CATÁLOGO ---
+@app.get("/api/biblioteca/catalogo")
+def obtener_catalogo():
+    """Envía todos los libros registrados al frontend de Vercel"""
+    conn = conectar_db()
+    if not conn: return {"error": "Sin base de datos"}
+    try:
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        cursor.execute("SELECT * FROM fichas_lectura ORDER BY fecha_actualizacion DESC;")
+        resultados = cursor.fetchall()
+        return {"catalogo": resultados}
+    except Exception as e:
+        return {"error": str(e)}
+    finally:
+        cursor.close()
+        conn.close()
+
+@app.post("/api/biblioteca/guardar")
+def guardar_libro(libro: DatosLibro):
+    """Guarda un libro nuevo o edita uno existente desde el frontend"""
+    conn = conectar_db()
+    if not conn: return {"exito": False, "detail": "Sin conexión a DB"}
+    try:
+        cursor = conn.cursor()
+        if libro.id:
+            # Si trae ID, actualizamos
+            query = """
+                UPDATE fichas_lectura 
+                SET titulo=%s, autor=%s, genero=%s, anio_publicacion=%s, isbn=%s, 
+                    editorial=%s, num_paginas=%s, palabras=%s, observaciones=%s, 
+                    estado_lectura=%s, calificacion=%s, fecha_actualizacion=CURRENT_TIMESTAMP
+                WHERE id=%s
+            """
+            cursor.execute(query, (libro.titulo, libro.autor, libro.genero, libro.anio_publicacion, libro.isbn, libro.editorial, libro.num_paginas, libro.palabras, libro.observaciones, libro.estado_lectura, libro.calificacion, libro.id))
+        else:
+            # Si no trae ID, insertamos nuevo
+            query = """
+                INSERT INTO fichas_lectura 
+                (titulo, autor, genero, anio_publicacion, isbn, editorial, num_paginas, palabras, observaciones, estado_lectura, calificacion)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """
+            cursor.execute(query, (libro.titulo, libro.autor, libro.genero, libro.anio_publicacion, libro.isbn, libro.editorial, libro.num_paginas, libro.palabras, libro.observaciones, libro.estado_lectura, libro.calificacion))
+        
+        conn.commit()
+        return {"exito": True, "mensaje": "Expediente guardado exitosamente"}
+    except Exception as e:
+        conn.rollback()
+        return {"exito": False, "detail": str(e)}
+    finally:
+        cursor.close()
+        conn.close()
+
+@app.delete("/api/biblioteca/eliminar/{id_libro}")
+def eliminar_libro(id_libro: int):
+    """Borra un expediente de forma permanente"""
+    conn = conectar_db()
+    if not conn: return {"exito": False, "detail": "Sin conexión a DB"}
+    try:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM fichas_lectura WHERE id = %s", (id_libro,))
+        conn.commit()
+        return {"exito": True}
+    except Exception as e:
+        conn.rollback()
+        return {"exito": False, "detail": str(e)}
+    finally:
+        cursor.close()
+        conn.close()
+
+# =====================================================================
+# MOTORES DE ARRANQUE Y CONEXIÓN
+# =====================================================================
+
 def run_api():
     port = int(os.getenv("PORT", 8080))
     uvicorn.run(app, host="0.0.0.0", port=port)
@@ -81,13 +174,15 @@ def conectar_db():
         print(f"❌ Error al conectar con Supabase: {e}")
         return None
 
+# =====================================================================
+# BOT DE DISCORD (LA BIBLIOTECARIA)
+# =====================================================================
+
 intents = discord.Intents.default()
 intents.message_content = True
 
 # IMPORTANTE: Desactivamos el 'help' por defecto de Discord para poner el nuestro
 bot = commands.Bot(command_prefix='!', intents=intents, help_command=None)
-
-
 
 @bot.event
 async def on_ready():
@@ -483,6 +578,7 @@ async def target_error(ctx, error):
     if isinstance(error, commands.BadArgument) or isinstance(error, commands.MissingRequiredArgument):
         await ctx.send("⚠️ Error de sintaxis. El formato correcto requiere un número primero.\n"
                        "Ejemplo: `!target 20000 Tokio Blues`. Inténtalo de nuevo, por favor.")
+
 @bot.command()
 async def resumen(ctx):
     """Muestra el top 3 de ofertas actuales cruzando el Data Mart"""
